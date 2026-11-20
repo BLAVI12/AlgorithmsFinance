@@ -184,3 +184,34 @@ show environment and code metadata.
 
 The generated JavaScript passed `node --check`. No benchmark was rerun while
 building or validating this dashboard revision.
+
+## 8. Iterative-loop performance review
+
+The iterative binary-search query loop was reviewed again after the complete
+measurement pipeline was in place. Candidate revisions were timed on the same
+seeded arrays and ordered query batches for all-present, all-absent, and mixed
+queries at `n = 1,000`, `10,000`, and `100,000`.
+
+The accepted revision:
+
+- computes the unchanged last valid index once per batch instead of once per
+  query;
+- uses `(low + high) // 2`, which is safe because Python integers do not
+  overflow; and
+- orders the less-than and greater-than branches before the equality case,
+  reducing comparisons on many unsuccessful search steps.
+
+In a focused 100-query mixed-case check, the accepted loop reduced median query
+time by about 14--16% at the three tested input lengths. The subsequent full
+18-case validation made its `q=100` query batch faster in all nine
+size/scenario combinations; the median reduction relative to the saved run was
+`12.8%`. A lower-bound-style loop was rejected even though it was fastest for
+all-absent queries: it was slower for all-present queries and was not the best
+balanced choice across the three required scenarios. A `for`/`else`
+linear-search rewrite was also rejected because it was neutral or slower in
+most measurements. The hash-set list comprehension, `set(ids)`, and
+`sorted(ids)` were retained because they already delegate their permitted
+operations to optimized standard-library code.
+
+These measurements support a local implementation decision; they do not prove
+that one search strategy is universally fastest on every machine or workload.

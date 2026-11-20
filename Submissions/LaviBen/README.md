@@ -136,6 +136,25 @@ This run used Python `3.14.7` on `arm64` and clean submission code commit
 `d4fd34f`. Full machine fields, source SHA-256, and raw observations are in
 `results/benchmark_results.json`.
 
+### Performance interpretation
+
+No one method is fastest and smallest for every workload. In the recorded
+large repeated-query case, hash-set membership has the lowest combined time
+because its one-time construction cost is repaid by constant-expected-time
+lookups. Linear search has the smallest measured auxiliary allocation and can
+be competitive when there is only one query, because it performs no index
+preparation. Binary search lies between those trade-offs and becomes more
+attractive when its sorted copy can serve many queries.
+
+The iterative binary-search loop was subsequently tightened by caching the
+last index once per batch, using Python's overflow-safe `(low + high) // 2`
+midpoint, and ordering the comparison branches to reduce work on unsuccessful
+steps. A complete temporary validation run made its `q=100` query batch faster
+in all nine size/scenario cases, with a median reduction of `12.8%` relative to
+the saved pre-optimization run. See `DEVELOPMENT_LOG.md` for the accepted and
+rejected alternatives. Machine timings support these local conclusions but do
+not prove universal dominance.
+
 ### Interactive dashboard
 
 The self-contained HTML dashboard embeds the saved JSON once and performs all

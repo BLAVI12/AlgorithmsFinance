@@ -97,22 +97,25 @@ def binary_iterative_query_batch(
     """
 
     results: list[bool] = []
+    last_index = len(sorted_ids) - 1
 
     for query in queries:
         low = 0
-        high = len(sorted_ids) - 1
+        high = last_index
         found = False
 
         while low <= high:
-            middle = low + (high - low) // 2
+            # Python integers cannot overflow, so this midpoint is simpler and
+            # measurably faster than low + (high - low) // 2.
+            middle = (low + high) // 2
             candidate = sorted_ids[middle]
-            if candidate == query:
-                found = True
-                break
             if candidate < query:
                 low = middle + 1
-            else:
+            elif candidate > query:
                 high = middle - 1
+            else:
+                found = True
+                break
 
         results.append(found)
 
