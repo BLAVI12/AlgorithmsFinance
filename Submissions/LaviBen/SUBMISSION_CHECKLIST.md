@@ -24,7 +24,7 @@
 | Keep synthetic data separate | Complete | `synthetic_data.py`; algorithm and benchmark modules only import it |
 | Generate larger deterministic inputs | Complete | `generate_search_case` with local seeded `Random` |
 | Trace a small example | Complete | Step-by-step trace in `DEVELOPMENT_LOG.md` |
-| Run every test after implementation | Complete | Seven-test version-1 run and final ten-test run |
+| Run every test after implementation | Complete | Seven-test version-1 run and final eleven-test run |
 | Make and preserve a revision | Complete | Recursive v1 retained; public binary search revised to iterative v2 |
 | Add newly discovered tests | Complete | Boundary misses, zero queries, and 0%/100% hit-rate cases |
 | Record what changed and why | Complete | Revision section in `DEVELOPMENT_LOG.md` |
@@ -40,6 +40,11 @@
 | Save generator settings per case | Complete | `results/input_manifest.json` with seed, rates, policy, and SHA-256 |
 | Measure memory in fresh tracing runs | Complete | `MemoryResult` rows and `results/memory_results.csv` |
 | State memory inclusions/exclusions | Complete | README memory section and JSON `memory_settings` |
+| Plot elapsed time against input length | Complete | Three interactive SVG charts, one curve per method |
+| Compare original and revised versions | Complete | Recursive-v1 versus iterative-v2 table and curves |
+| Show query count, hit rate, units, and memory | Complete | Dashboard controls, chips, and memory table |
+| Load saved data for view changes | Complete | Embedded JSON filtered entirely in browser JavaScript |
+| Expose raw repeats and environment | Complete | Expandable raw table/download and metadata details |
 
 ## Correctness reasoning
 

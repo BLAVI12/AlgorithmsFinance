@@ -29,6 +29,10 @@ python3 dashboard.py
 Open `results/runtime_dashboard.html` in a browser to inspect the generated
 dashboard.
 
+`dashboard.py` reads `results/benchmark_results.json` only. It does not import
+or call the benchmark or search modules, so regenerating the dashboard and
+changing its browser controls cannot rerun measurements.
+
 ## Example
 
 ```python
@@ -130,6 +134,25 @@ This run used Python `3.14.7` on `arm64` and clean submission code commit
 `d4fd34f`. Full machine fields, source SHA-256, and raw observations are in
 `results/benchmark_results.json`.
 
+### Interactive dashboard
+
+The self-contained HTML dashboard embeds the saved JSON once and performs all
+view changes in browser JavaScript. It provides:
+
+- query-count and present/absent/mixed scenario controls;
+- requested and realized hit rates plus timing and memory units;
+- separate input-length curves for preparation, complete query batch, and
+  total elapsed time, with one curve per method;
+- a direct recursive-v1 versus iterative-v2 comparison table;
+- the chosen current/peak traced-memory rows;
+- expandable raw timing repetitions and a filtered CSV download; and
+- expandable Python, machine, generator, memory-scope, and code-version
+  details.
+
+Run only `python3 dashboard.py` to rebuild the view from existing measurements.
+Run `python3 benchmark.py` separately only when intentionally collecting a new
+measurement set.
+
 ### Memory measurement
 
 Memory is measured in a separate run so `tracemalloc` does not perturb runtime
@@ -173,7 +196,7 @@ or hash set.
 | `search_algorithms.py` | Required methods and preserved recursive version |
 | `synthetic_data.py` | Deterministic input generation |
 | `benchmark.py` | Fixed-input preparation/query/combined measurement |
-| `dashboard.py` | Self-contained HTML dashboard generation |
+| `dashboard.py` | Interactive HTML app generated from saved JSON only |
 | `tests/` | Shared algorithm, generator, and pipeline tests |
 | `results/benchmark_results.json` | Metadata, cases, raw timings, and summaries |
 | `results/benchmark_results.csv` | Median preparation/query/combined summary |

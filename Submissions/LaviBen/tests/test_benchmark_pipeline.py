@@ -85,6 +85,15 @@ class BenchmarkPipelineTests(unittest.TestCase):
             self.assertIn("Binary search iterative v2", dashboard)
             self.assertIn("Preparation median", dashboard)
             self.assertIn("Peak traced memory", dashboard)
+            self.assertIn('id="query-count"', dashboard)
+            self.assertIn('id="scenario"', dashboard)
+            self.assertIn("Preparation time", dashboard)
+            self.assertIn("Query-batch time", dashboard)
+            self.assertIn("Total time", dashboard)
+            self.assertIn("Original vs revised", dashboard)
+            self.assertIn("Raw repeats", dashboard)
+            self.assertIn("Environment details", dashboard)
+            self.assertIn("const benchmarkData =", dashboard)
 
 
 if __name__ == "__main__":

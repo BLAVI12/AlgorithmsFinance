@@ -167,3 +167,20 @@ The versioned memory run used clean submission code commit `d4fd34f` and saved
 bytes were `864` (linear), `1,199,824` (recursive binary), `1,199,824`
 (iterative binary), and `2,621,656` (hash set). The input is excluded from all
 four values; preparation and the returned output are included.
+
+## 7. Saved-results dashboard revision
+
+Interactive-dashboard tests were added first. The old static dashboard failed
+the new contract because it had no query/scenario controls, saved-data client,
+raw-repeat access, or environment-details view.
+
+The revised `dashboard.py` imports only `argparse`, `json`, and `pathlib`. It
+reads the previously saved JSON and embeds it in a self-contained HTML file.
+Browser JavaScript filters that data without invoking Python. Three charts show
+preparation, complete query batch, and total time against input length, with one
+curve per method. Additional views compare recursive v1 with iterative v2,
+display selected memory rows, expose raw repetitions with CSV download, and
+show environment and code metadata.
+
+The generated JavaScript passed `node --check`. No benchmark was rerun while
+building or validating this dashboard revision.
