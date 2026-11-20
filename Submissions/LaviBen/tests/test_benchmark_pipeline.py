@@ -119,6 +119,8 @@ class BenchmarkPipelineTests(unittest.TestCase):
             self.assertIn("Input length (log scale)", dashboard)
             self.assertIn("Preparation calls", dashboard)
             self.assertIn("Clock resolution", dashboard)
+            self.assertIn("independent estimates", dashboard)
+            self.assertIn("stroke-dasharray", dashboard)
 
     def test_previous_algorithm_state_is_released_before_next_prepare(self) -> None:
         """Regression test for audit finding B1 (destruction charged to next method)."""

@@ -252,7 +252,8 @@ The repaired pipeline now:
   known-allocation scope test proving the prebuilt input is excluded while the
   prepared structure and output remain included; and
 - uses the numeric input size on a logarithmic x-axis, exposes timing batch
-  counts and clock resolution, and retains requested and realized hit rates in
+  counts and clock resolution, retains requested and realized hit rates, and
+  uses distinct line patterns/marker sizes for overlapping version curves in
   the saved-results dashboard.
 
 Preparation, query-batch, and combined timings remain independent estimates.

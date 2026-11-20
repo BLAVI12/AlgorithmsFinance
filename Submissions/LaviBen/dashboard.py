@@ -121,6 +121,11 @@ HTML_TEMPLATE = r"""<!doctype html>
 
   <section class="panel">
     <h2>Elapsed time against input length</h2>
+    <p class="note">
+      Preparation, query batch, and total are independent estimates. Total
+      brackets both operations in its own timed batch; it is not the arithmetic
+      sum of the other two separately sampled panels.
+    </p>
     <div class="legend" id="legend"></div>
     <div class="chart-grid">
       <article class="chart-card">
@@ -140,7 +145,11 @@ HTML_TEMPLATE = r"""<!doctype html>
 
   <section class="panel">
     <h2>Original vs revised binary search</h2>
-    <p class="note">Recursive v1 and iterative v2 on the same saved inputs.</p>
+    <p class="note">
+      Recursive v1 and iterative v2 use the same saved inputs. V2 bundles
+      iteration, helper inlining, a cached final index, and branch changes, so
+      the difference is not attributable to recursion alone.
+    </p>
     <table>
       <thead><tr><th>Input length</th><th class="text-left">Version</th>
         <th>Preparation median (ms)</th><th>Query median (ms)</th>
@@ -190,6 +199,8 @@ HTML_TEMPLATE = r"""<!doctype html>
 <script>
 const benchmarkData = __BENCHMARK_DATA__;
 const colors = ["#2563eb", "#9333ea", "#ea580c", "#059669"];
+const dashPatterns = ["", "10 5", "3 4", "14 4 3 4"];
+const markerRadii = [4.5, 6, 3.5, 4.5];
 const summaryRows = benchmarkData.summary;
 const caseRows = benchmarkData.cases;
 const rawRows = benchmarkData.raw_results;
@@ -297,9 +308,11 @@ function renderChart(svgId, metric) {
     });
     const points = series.map(point => `${point.x},${point.y}`).join(" ");
     const color = colors[algorithmIndex % colors.length];
-    parts.push(`<polyline points="${points}" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round"/>`);
+    const dash = dashPatterns[algorithmIndex % dashPatterns.length];
+    const radius = markerRadii[algorithmIndex % markerRadii.length];
+    parts.push(`<polyline points="${points}" fill="none" stroke="${color}" stroke-width="3" stroke-dasharray="${dash}" stroke-linejoin="round"/>`);
     series.forEach(point => parts.push(
-      `<circle cx="${point.x}" cy="${point.y}" r="4" fill="${color}"><title>${escapeHtml(algorithm)} · n=${Number(point.row.array_size).toLocaleString()} · ${formatNumber(point.row[metric])} ms</title></circle>`
+      `<circle cx="${point.x}" cy="${point.y}" r="${radius}" fill="#fff" stroke="${color}" stroke-width="2"><title>${escapeHtml(algorithm)} · n=${Number(point.row.array_size).toLocaleString()} · ${formatNumber(point.row[metric])} ms</title></circle>`
     ));
   });
   parts.push(`<text x="${left + chartWidth / 2}" y="${height - 4}" text-anchor="middle" class="axis-title">Input length (log scale)</text>`);

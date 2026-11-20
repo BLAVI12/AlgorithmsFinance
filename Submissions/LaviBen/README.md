@@ -123,6 +123,11 @@ next method starts. The benchmark records:
 - **query batch:** the complete ordered query list; and
 - **combined:** elapsed time spanning preparation and the complete batch.
 
+These are three independent batched estimates. Combined time brackets both
+operations in its own invocation, but is not calculated as the sum of the
+separately sampled preparation and query values; ordinary run-to-run variation
+can therefore make a total estimate slightly lower than one component estimate.
+
 Raw nanoseconds-per-call timings and call counts, millisecond medians, seeds,
 generator settings, input digests, Python and machine details, and Git/source
 versions are saved under `results/`. `dashboard.py` turns the JSON into a
@@ -170,7 +175,8 @@ view changes in browser JavaScript. It provides:
 - query-count and present/absent/mixed scenario controls;
 - requested and realized hit rates plus timing and memory units;
 - separate logarithmic input-length curves for preparation, complete query
-  batch, and total elapsed time, with one curve per method;
+  batch, and total elapsed time, with one curve per method and distinct dash
+  patterns/marker sizes so overlapping binary versions remain visible;
 - a direct recursive-v1 versus iterative-v2 comparison table;
 - the chosen current/peak traced-memory rows;
 - expandable raw timing repetitions and a filtered CSV download; and
