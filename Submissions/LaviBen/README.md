@@ -252,6 +252,7 @@ or hash set.
 
 | Path | Purpose |
 |---|---|
+| `AGENTS.md` | Durable, submission-scoped rules learned from the benchmark audit |
 | `search_algorithms.py` | Required methods and preserved recursive version |
 | `synthetic_data.py` | Deterministic input generation |
 | `benchmark.py` | Fixed-input preparation/query/combined measurement |
