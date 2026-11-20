@@ -161,3 +161,9 @@ dependency or platform-specific code, includes interpreter/process overhead,
 and can miss brief peaks. The documentation explicitly avoids treating
 `tracemalloc` peak bytes as a direct measurement of algorithmic auxiliary
 space.
+
+The versioned memory run used clean submission code commit `d4fd34f` and saved
+72 fresh tracing results. For `n=100,000`, `q=100`, mixed queries, peak traced
+bytes were `864` (linear), `1,199,824` (recursive binary), `1,199,824`
+(iterative binary), and `2,621,656` (hash set). The input is excluded from all
+four values; preparation and the returned output are included.

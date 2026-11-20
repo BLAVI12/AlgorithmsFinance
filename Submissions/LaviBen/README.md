@@ -121,13 +121,13 @@ Recorded medians for `n=100,000`, `q=100`, mixed queries:
 
 | Implementation | Preparation (ms) | Query batch (ms) | Combined (ms) |
 |---|---:|---:|---:|
-| Linear search | 0.065250 | 51.143791 | 51.227500 |
-| Binary search recursive v1 | 10.468250 | 0.127834 | 10.596250 |
-| Binary search iterative v2 | 10.557000 | 0.104333 | 10.673750 |
-| Hash set membership | 1.876375 | 0.004750 | 1.882083 |
+| Linear search | 0.070625 | 51.087500 | 51.210208 |
+| Binary search recursive v1 | 10.470625 | 0.129917 | 10.600250 |
+| Binary search iterative v2 | 10.623333 | 0.106958 | 10.737292 |
+| Hash set membership | 1.877125 | 0.005208 | 1.882458 |
 
 This run used Python `3.14.7` on `arm64` and clean submission code commit
-`b122ea5`. Full machine fields, source SHA-256, and raw observations are in
+`d4fd34f`. Full machine fields, source SHA-256, and raw observations are in
 `results/benchmark_results.json`.
 
 ### Memory measurement
@@ -152,6 +152,19 @@ the same as formal auxiliary-space complexity. RSS is not recorded: it would
 include the Python interpreter and unrelated process overhead, and periodic
 sampling could miss brief peaks. Memory results are stored in bytes in
 `results/memory_results.csv` and in the complete JSON evidence.
+
+Recorded traced memory for `n=100,000`, `q=100`, mixed queries:
+
+| Implementation | Current traced bytes | Peak traced bytes | Peak KiB |
+|---|---:|---:|---:|
+| Linear search | 864 | 864 | 0.84 |
+| Binary search recursive v1 | 801,120 | 1,199,824 | 1,171.70 |
+| Binary search iterative v2 | 800,864 | 1,199,824 | 1,171.70 |
+| Hash set membership | 2,098,232 | 2,621,656 | 2,560.21 |
+
+These figures exclude the prebuilt 100,000-entry input and query tuple. They
+include the returned 100-Boolean output and, where applicable, the sorted copy
+or hash set.
 
 ## Project layout
 
