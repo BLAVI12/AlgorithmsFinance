@@ -1,6 +1,6 @@
 # Audit target
 
-- Full commit SHA: `f532d3cbb06d9516fac880012840271930990452`
+- Full commit SHA: `f532d3cea1ff1f98cd89dfc0e3d385d3f72d5833`
 - Short SHA: `f532d3c`
 - Annotated tag: `lavi-search-audit-v3`
 - Source branch: `BLAVI12:lavi/benchmark-audit-fixes`
@@ -19,7 +19,7 @@ git show --stat --oneline lavi-search-audit-v3
 Checkout the recorded version without changing it:
 
 ```bash
-git checkout --detach f532d3cbb06d9516fac880012840271930990452
+git checkout --detach f532d3cea1ff1f98cd89dfc0e3d385d3f72d5833
 cd Submissions/LaviBen
 python3 -m unittest discover -s tests -v
 ```
