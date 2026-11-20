@@ -128,7 +128,8 @@ The revised benchmark now:
 One dashboard integration test then exposed an assumption that `q=100` was
 always present. The dashboard was corrected to select the largest available
 query count, allowing reduced test matrices without changing full-run behavior.
-The expanded final suite contains eleven passing tests.
+That expansion produced eleven passing tests. The later external-audit repair
+described in section 9 raises the final suite to sixteen tests.
 
 The versioned full run used code commit `b122ea5` with a clean submission tree.
 It produced 18 input cases, 360 raw observations, and 72 median summaries. For
@@ -216,3 +217,55 @@ permitted operations to optimized standard-library code.
 
 These measurements support a local implementation decision; they do not prove
 that one search strategy is universally fastest on every machine or workload.
+
+The recursive-v1 versus iterative-v2 comparison is not a single-factor
+experiment. V2 removes recursive calls, inlines the loop into the query batch,
+caches the final index, uses a different midpoint expression, and changes
+branch order. Suggestions to describe the measured delta as the isolated cost
+of recursion were rejected; the result measures that complete change set.
+
+## 9. External-audit remediation
+
+Yannick Welscher's independent audit of the earlier benchmark found two
+reproducible defects and four measurement/documentation weaknesses. Regression
+tests were written first. The baseline run failed because duplicate dimensions
+were accepted, timing had no batching parameters, the prior method's prepared
+state remained alive until the next method started, and generated misses did
+not cover both sides and internal gaps.
+
+The repaired pipeline now:
+
+- runs every warm-up and timed method inside a lifetime-isolated helper and
+  performs cleanup outside all timing windows, fixing cleanup attribution;
+- rejects duplicate sizes, query counts, or scenarios before case identifiers
+  can collide, includes the seed in each case ID, and matches summaries on both
+  case ID and input digest;
+- adaptively batches short operations toward a 2 ms interval, records the call
+  count for preparation/query/combined measurements, and stores elapsed
+  nanoseconds per call;
+- records `perf_counter` implementation, resolution, observed timer-call
+  overhead, batching target, and cap without subtracting overhead;
+- advances the generator to v3 with signed duplicate-heavy IDs and guaranteed
+  below-range, internal-gap, and above-range misses when those categories are
+  representable;
+- runs garbage collection before every fresh `tracemalloc` session and adds a
+  known-allocation scope test proving the prebuilt input is excluded while the
+  prepared structure and output remain included; and
+- uses the numeric input size on a logarithmic x-axis, exposes timing batch
+  counts and clock resolution, and retains requested and realized hit rates in
+  the saved-results dashboard.
+
+Preparation, query-batch, and combined timings remain independent estimates.
+The combined timer really brackets both operations, but its average is not
+defined as the arithmetic sum of the other two separately batched samples and
+can be slightly lower because of ordinary timing variation. The tests now
+check positive samples and correct scope instead of asserting a false numeric
+ordering between independent estimates.
+
+The AI suggestions to mask contradictions with `max(total, component)` or to
+subtract a guessed timer cost were rejected because both would alter observed
+data. The accepted approach records the resolution, overhead, and batch counts
+so reviewers can judge measurement scale directly. The audit reproduction
+instructions were also corrected to create a detached worktree at Yannick's
+exact recorded commit; running the verifier against the moving review branch
+would correctly fail its commit guard.

@@ -15,17 +15,29 @@ cache test.
 
 ## Reproduce
 
-Create Yannick's documented environment in the audited checkout, then run:
+Create a detached worktree at the exact audited commit. This matters because
+the reproduction script deliberately rejects a moving branch head or any
+different repository commit.
 
 ```bash
-cd Submissions/WelscherYannick
-.venv/bin/python -m pytest -p no:cacheprovider -ra
+cd /path/to/AlgorithmsFinance
+AUDIT_TREE=/tmp/algorithmsfinance-yannick-654516b
+AUDIT_ENV=/tmp/yannick-audit-venv
+git worktree add --detach "$AUDIT_TREE" \
+  654516b585dd419ff63f37642d5c211891799fcb
+python3 -m venv "$AUDIT_ENV"
+"$AUDIT_ENV/bin/python" -m pip install -r \
+  "$AUDIT_TREE/Submissions/WelscherYannick/requirements.txt"
 
-cd ../LaviBen/phase2_welscher_yannick
-../../../Submissions/WelscherYannick/.venv/bin/python reproduce_audit.py \
-  ../../../Submissions/WelscherYannick
+cd "$AUDIT_TREE/Submissions/WelscherYannick"
+"$AUDIT_ENV/bin/python" -m pytest -p no:cacheprovider -ra
+
+cd /path/to/AlgorithmsFinance
+"$AUDIT_ENV/bin/python" \
+  Submissions/LaviBen/phase2_welscher_yannick/reproduce_audit.py \
+  "$AUDIT_TREE/Submissions/WelscherYannick"
 ```
 
-The virtual environment may be elsewhere. In that case, invoke
-`reproduce_audit.py` with the Python interpreter containing the packages from
-Yannick's `requirements.txt`.
+After verification, remove the isolated checkout with
+`git worktree remove "$AUDIT_TREE"`. The environment may be elsewhere; invoke
+both commands with the same interpreter containing Yannick's pinned packages.

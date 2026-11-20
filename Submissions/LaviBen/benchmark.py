@@ -15,9 +15,10 @@ import tracemalloc
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from math import ceil
 from pathlib import Path
 from statistics import median
-from time import perf_counter_ns
+from time import get_clock_info, perf_counter_ns
 from typing import Any
 
 from search_algorithms import (
@@ -32,6 +33,7 @@ from search_algorithms import (
 from synthetic_data import (
     DUPLICATE_POLICY,
     GENERATOR_VERSION,
+    MISS_POLICY,
     generate_search_case,
 )
 
@@ -46,6 +48,8 @@ SCENARIO_HIT_RATES = {
 }
 DEFAULT_REPEATS = 5
 DEFAULT_BASE_SEED = 2026
+DEFAULT_MIN_TIMING_WINDOW_NS = 2_000_000
+DEFAULT_MAX_TIMING_CALLS = 10_000
 
 PrepareMethod = Callable[[Sequence[int]], Any]
 QueryBatchMethod = Callable[[Any, Sequence[int]], list[bool]]
@@ -106,9 +110,12 @@ class RawTiming:
     repeat: int
     order_position: int
     input_sha256: str
-    preparation_ns: int
-    query_batch_ns: int
-    combined_ns: int
+    preparation_calls: int
+    query_batch_calls: int
+    combined_calls: int
+    preparation_ns: float
+    query_batch_ns: float
+    combined_ns: float
 
 
 @dataclass(frozen=True)
@@ -193,6 +200,24 @@ def _git_output(*arguments: str) -> str:
     return completed.stdout.strip() if completed.returncode == 0 else "unknown"
 
 
+def _clock_metadata() -> dict[str, Any]:
+    info = get_clock_info("perf_counter")
+    overhead_samples = []
+    for _ in range(1_000):
+        started = perf_counter_ns()
+        stopped = perf_counter_ns()
+        overhead_samples.append(stopped - started)
+    return {
+        "name": "time.perf_counter_ns",
+        "implementation": info.implementation,
+        "resolution_ns": info.resolution * 1_000_000_000,
+        "monotonic": info.monotonic,
+        "adjustable": info.adjustable,
+        "timer_overhead_ns_median": median(overhead_samples),
+        "timer_overhead_subtracted": False,
+    }
+
+
 def _metadata(
     *,
     sizes: Sequence[int],
@@ -200,6 +225,8 @@ def _metadata(
     scenarios: Sequence[str],
     repeats: int,
     base_seed: int,
+    min_timing_window_ns: int,
+    max_timing_calls: int,
 ) -> dict[str, Any]:
     submission_status = _git_output(
         "status",
@@ -210,7 +237,7 @@ def _metadata(
     return {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "units": {
-            "raw_timings": "nanoseconds",
+            "raw_timings": "nanoseconds per call",
             "summary_timings": "milliseconds",
             "traced_memory": "bytes",
         },
@@ -235,7 +262,13 @@ def _metadata(
             "scenarios": list(scenarios),
             "repeats": repeats,
             "base_seed": base_seed,
-            "clock": "time.perf_counter_ns",
+            "clock": _clock_metadata(),
+            "minimum_timing_window_ns": min_timing_window_ns,
+            "maximum_calls_per_timing_window": max_timing_calls,
+            "short_operation_policy": (
+                "adaptive batching sized by max(pilot operation, pilot cleanup); "
+                "save timed elapsed/calls and each call count"
+            ),
             "summary_statistic": "median",
             "data_generation_timed": False,
             "garbage_collection_disabled_during_timing": True,
@@ -244,6 +277,7 @@ def _metadata(
         "generator_settings": {
             "generator_version": GENERATOR_VERSION,
             "duplicate_policy": DUPLICATE_POLICY,
+            "miss_policy": MISS_POLICY,
             "value_pool_size": "max(1, array_size // 3)",
             "sampling": "with replacement",
             "query_order": "seeded shuffle",
@@ -253,6 +287,7 @@ def _metadata(
         "memory_settings": {
             "tool": "tracemalloc",
             "fresh_tracing_run_per_case_and_method": True,
+            "garbage_collection_before_trace": True,
             "input_built_before_tracing": True,
             "input_included": False,
             "preparation_included": True,
@@ -274,6 +309,15 @@ def _build_fixed_inputs(
     *,
     base_seed: int,
 ) -> list[_FixedInput]:
+    dimensions = (
+        (sizes, "array sizes"),
+        (query_counts, "query counts"),
+        (scenarios, "scenarios"),
+    )
+    for values, label in dimensions:
+        if len(set(values)) != len(values):
+            raise ValueError(f"duplicate {label} are not allowed")
+
     fixed_inputs: list[_FixedInput] = []
     case_index = 0
 
@@ -302,7 +346,7 @@ def _build_fixed_inputs(
                 realized_hit_rate = (
                     realized_hits / query_count if query_count else 0.0
                 )
-                case_id = f"n{array_size}_q{query_count}_{scenario}"
+                case_id = f"n{array_size}_q{query_count}_{scenario}_seed{seed}"
                 case = BenchmarkCase(
                     case_id=case_id,
                     array_size=array_size,
@@ -323,13 +367,184 @@ def _build_fixed_inputs(
     return fixed_inputs
 
 
+def _timing_call_count(
+    operation: Callable[[], Any],
+    *,
+    min_timing_window_ns: int,
+    max_timing_calls: int,
+) -> int:
+    """Choose a batch size from an untimed-for-results pilot invocation."""
+
+    started = perf_counter_ns()
+    retained_value = operation()
+    elapsed = perf_counter_ns() - started
+    cleanup_started = perf_counter_ns()
+    del retained_value
+    cleanup_elapsed = perf_counter_ns() - cleanup_started
+    sizing_cost = max(elapsed, cleanup_elapsed)
+    if sizing_cost <= 0:
+        return max_timing_calls
+    return max(1, min(max_timing_calls, ceil(min_timing_window_ns / sizing_cost)))
+
+
+def _warm_up_algorithm(
+    algorithm: AlgorithmSpec,
+    fixed_input: _FixedInput,
+    expected: Sequence[bool],
+) -> None:
+    prepared = algorithm.prepare(fixed_input.ids)
+    result = algorithm.query_batch(prepared, fixed_input.queries)
+    if result != expected:
+        raise AssertionError(f"{algorithm.name} failed warm-up correctness")
+
+
+def _time_preparation(
+    algorithm: AlgorithmSpec,
+    ids: Sequence[int],
+    *,
+    min_timing_window_ns: int,
+    max_timing_calls: int,
+) -> tuple[float, int]:
+    calls = _timing_call_count(
+        lambda: algorithm.prepare(ids),
+        min_timing_window_ns=min_timing_window_ns,
+        max_timing_calls=max_timing_calls,
+    )
+    prepared_values: list[Any] = [None] * calls
+    started = perf_counter_ns()
+    for index in range(calls):
+        prepared_values[index] = algorithm.prepare(ids)
+    elapsed = perf_counter_ns() - started
+    del prepared_values
+    return elapsed / calls, calls
+
+
+def _time_query_batch(
+    algorithm: AlgorithmSpec,
+    fixed_input: _FixedInput,
+    expected: Sequence[bool],
+    *,
+    min_timing_window_ns: int,
+    max_timing_calls: int,
+) -> tuple[float, int]:
+    prepared = algorithm.prepare(fixed_input.ids)
+    calls = _timing_call_count(
+        lambda: algorithm.query_batch(prepared, fixed_input.queries),
+        min_timing_window_ns=min_timing_window_ns,
+        max_timing_calls=max_timing_calls,
+    )
+    results: list[list[bool] | None] = [None] * calls
+    started = perf_counter_ns()
+    for index in range(calls):
+        results[index] = algorithm.query_batch(prepared, fixed_input.queries)
+    elapsed = perf_counter_ns() - started
+    if results[-1] != expected:
+        raise AssertionError(f"{algorithm.name} returned incorrect results")
+    del results, prepared
+    return elapsed / calls, calls
+
+
+def _time_combined(
+    algorithm: AlgorithmSpec,
+    fixed_input: _FixedInput,
+    expected: Sequence[bool],
+    *,
+    min_timing_window_ns: int,
+    max_timing_calls: int,
+) -> tuple[float, int]:
+    def prepare_and_query() -> tuple[Any, list[bool]]:
+        prepared = algorithm.prepare(fixed_input.ids)
+        result = algorithm.query_batch(prepared, fixed_input.queries)
+        return prepared, result
+
+    calls = _timing_call_count(
+        prepare_and_query,
+        min_timing_window_ns=min_timing_window_ns,
+        max_timing_calls=max_timing_calls,
+    )
+    prepared_values: list[Any] = [None] * calls
+    results: list[list[bool] | None] = [None] * calls
+    started = perf_counter_ns()
+    for index in range(calls):
+        prepared_values[index] = algorithm.prepare(fixed_input.ids)
+        results[index] = algorithm.query_batch(
+            prepared_values[index],
+            fixed_input.queries,
+        )
+    elapsed = perf_counter_ns() - started
+    if results[-1] != expected:
+        raise AssertionError(f"{algorithm.name} returned incorrect results")
+    del results, prepared_values
+    return elapsed / calls, calls
+
+
+def _measure_algorithm(
+    algorithm: AlgorithmSpec,
+    fixed_input: _FixedInput,
+    expected: Sequence[bool],
+    *,
+    repeat: int,
+    order_position: int,
+    min_timing_window_ns: int,
+    max_timing_calls: int,
+) -> RawTiming:
+    garbage_collection_was_enabled = gc.isenabled()
+    if garbage_collection_was_enabled:
+        gc.disable()
+    try:
+        preparation_ns, preparation_calls = _time_preparation(
+            algorithm,
+            fixed_input.ids,
+            min_timing_window_ns=min_timing_window_ns,
+            max_timing_calls=max_timing_calls,
+        )
+        query_batch_ns, query_batch_calls = _time_query_batch(
+            algorithm,
+            fixed_input,
+            expected,
+            min_timing_window_ns=min_timing_window_ns,
+            max_timing_calls=max_timing_calls,
+        )
+        combined_ns, combined_calls = _time_combined(
+            algorithm,
+            fixed_input,
+            expected,
+            min_timing_window_ns=min_timing_window_ns,
+            max_timing_calls=max_timing_calls,
+        )
+    finally:
+        if garbage_collection_was_enabled:
+            gc.enable()
+
+    return RawTiming(
+        case_id=fixed_input.case.case_id,
+        algorithm=algorithm.name,
+        version=algorithm.version,
+        repeat=repeat,
+        order_position=order_position,
+        input_sha256=fixed_input.case.input_sha256,
+        preparation_calls=preparation_calls,
+        query_batch_calls=query_batch_calls,
+        combined_calls=combined_calls,
+        preparation_ns=preparation_ns,
+        query_batch_ns=query_batch_ns,
+        combined_ns=combined_ns,
+    )
+
+
 def _measure_fixed_inputs(
     fixed_inputs: Sequence[_FixedInput],
     *,
     repeats: int,
+    min_timing_window_ns: int = DEFAULT_MIN_TIMING_WINDOW_NS,
+    max_timing_calls: int = DEFAULT_MAX_TIMING_CALLS,
 ) -> list[RawTiming]:
     if repeats < 1:
         raise ValueError("repeats must be at least 1")
+    if min_timing_window_ns < 1:
+        raise ValueError("min_timing_window_ns must be at least 1")
+    if max_timing_calls < 1:
+        raise ValueError("max_timing_calls must be at least 1")
 
     raw_results: list[RawTiming] = []
     for fixed_input in fixed_inputs:
@@ -337,45 +552,27 @@ def _measure_fixed_inputs(
         expected = [query in lookup for query in fixed_input.queries]
 
         for algorithm in ALGORITHMS:
-            prepared = algorithm.prepare(fixed_input.ids)
-            if algorithm.query_batch(prepared, fixed_input.queries) != expected:
-                raise AssertionError(f"{algorithm.name} failed warm-up correctness")
+            _warm_up_algorithm(algorithm, fixed_input, expected)
+            gc.collect()
 
         for repeat_index in range(repeats):
             rotation = repeat_index % len(ALGORITHMS)
             ordered_algorithms = ALGORITHMS[rotation:] + ALGORITHMS[:rotation]
             for order_position, algorithm in enumerate(ordered_algorithms):
-                garbage_collection_was_enabled = gc.isenabled()
-                if garbage_collection_was_enabled:
-                    gc.disable()
-                try:
-                    combined_started = perf_counter_ns()
-                    preparation_started = perf_counter_ns()
-                    prepared = algorithm.prepare(fixed_input.ids)
-                    preparation_finished = perf_counter_ns()
-                    query_started = perf_counter_ns()
-                    result = algorithm.query_batch(prepared, fixed_input.queries)
-                    query_finished = perf_counter_ns()
-                finally:
-                    if garbage_collection_was_enabled:
-                        gc.enable()
-
-                if result != expected:
-                    raise AssertionError(f"{algorithm.name} returned incorrect results")
-
                 raw_results.append(
-                    RawTiming(
-                        case_id=fixed_input.case.case_id,
-                        algorithm=algorithm.name,
-                        version=algorithm.version,
+                    _measure_algorithm(
+                        algorithm,
+                        fixed_input,
+                        expected,
                         repeat=repeat_index + 1,
                         order_position=order_position + 1,
-                        input_sha256=fixed_input.case.input_sha256,
-                        preparation_ns=preparation_finished - preparation_started,
-                        query_batch_ns=query_finished - query_started,
-                        combined_ns=query_finished - combined_started,
+                        min_timing_window_ns=min_timing_window_ns,
+                        max_timing_calls=max_timing_calls,
                     )
                 )
+                # Destruction and cyclic collection are outside every timing
+                # window, so one method cannot charge cleanup to the next.
+                gc.collect()
 
     return raw_results
 
@@ -392,8 +589,15 @@ def _summarize(
             rows = [
                 row
                 for row in raw_results
-                if row.case_id == case.case_id and row.algorithm == algorithm.name
+                if row.case_id == case.case_id
+                and row.input_sha256 == case.input_sha256
+                and row.algorithm == algorithm.name
             ]
+            if len(rows) != repeats:
+                raise AssertionError(
+                    f"expected {repeats} raw rows for {case.case_id} / "
+                    f"{algorithm.name}, found {len(rows)}"
+                )
             summary.append(
                 SummaryResult(
                     case_id=case.case_id,
@@ -432,6 +636,7 @@ def _measure_memory(fixed_inputs: Sequence[_FixedInput]) -> list[MemoryResult]:
         expected = [query in lookup for query in fixed_input.queries]
 
         for algorithm in ALGORITHMS:
+            gc.collect()
             tracemalloc.start()
             try:
                 prepared = algorithm.prepare(fixed_input.ids)
@@ -473,6 +678,8 @@ def run_benchmarks(
     scenarios: Sequence[str] = SCENARIOS,
     repeats: int = DEFAULT_REPEATS,
     base_seed: int = DEFAULT_BASE_SEED,
+    min_timing_window_ns: int = DEFAULT_MIN_TIMING_WINDOW_NS,
+    max_timing_calls: int = DEFAULT_MAX_TIMING_CALLS,
 ) -> BenchmarkRun:
     """Generate each case once, then measure all algorithms on that input."""
 
@@ -482,7 +689,12 @@ def run_benchmarks(
         scenarios,
         base_seed=base_seed,
     )
-    raw_results = _measure_fixed_inputs(fixed_inputs, repeats=repeats)
+    raw_results = _measure_fixed_inputs(
+        fixed_inputs,
+        repeats=repeats,
+        min_timing_window_ns=min_timing_window_ns,
+        max_timing_calls=max_timing_calls,
+    )
     cases = [fixed_input.case for fixed_input in fixed_inputs]
     summary = _summarize(cases, raw_results, repeats=repeats)
     memory_results = _measure_memory(fixed_inputs)
@@ -493,6 +705,8 @@ def run_benchmarks(
             scenarios=scenarios,
             repeats=repeats,
             base_seed=base_seed,
+            min_timing_window_ns=min_timing_window_ns,
+            max_timing_calls=max_timing_calls,
         ),
         cases=cases,
         raw_results=raw_results,
@@ -608,6 +822,18 @@ def main() -> None:
     )
     parser.add_argument("--repeats", type=int, default=DEFAULT_REPEATS)
     parser.add_argument("--base-seed", type=int, default=DEFAULT_BASE_SEED)
+    parser.add_argument(
+        "--min-timing-window-ns",
+        type=int,
+        default=DEFAULT_MIN_TIMING_WINDOW_NS,
+        help="adaptive batching target for each measured interval",
+    )
+    parser.add_argument(
+        "--max-timing-calls",
+        type=int,
+        default=DEFAULT_MAX_TIMING_CALLS,
+        help="maximum operations retained in one measured batch",
+    )
     parser.add_argument("--output", type=Path, default=Path("results"))
     arguments = parser.parse_args()
 
@@ -617,6 +843,8 @@ def main() -> None:
         scenarios=arguments.scenarios,
         repeats=arguments.repeats,
         base_seed=arguments.base_seed,
+        min_timing_window_ns=arguments.min_timing_window_ns,
+        max_timing_calls=arguments.max_timing_calls,
     )
     artifacts = write_results(run, arguments.output)
     print("Wrote " + ", ".join(str(path) for path in artifacts.values()))

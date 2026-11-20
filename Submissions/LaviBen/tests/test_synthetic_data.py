@@ -49,6 +49,15 @@ class SyntheticDataTests(unittest.TestCase):
         self.assertEqual(len(queries), 1)
         self.assertIn(queries[0], set(ids))
 
+    def test_absent_queries_cover_below_gaps_and_above_ids(self) -> None:
+        ids, queries = generate_search_case(60, 30, seed=17, hit_rate=0.0)
+        present = set(ids)
+
+        self.assertTrue(all(query not in present for query in queries))
+        self.assertTrue(any(query < min(ids) for query in queries))
+        self.assertTrue(any(min(ids) < query < max(ids) for query in queries))
+        self.assertTrue(any(query > max(ids) for query in queries))
+
     def test_invalid_parameters_are_rejected(self) -> None:
         invalid_arguments = (
             (-1, 3, 0.5),

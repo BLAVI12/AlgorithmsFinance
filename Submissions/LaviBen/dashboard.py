@@ -100,7 +100,7 @@ HTML_TEMPLATE = r"""<!doctype html>
     <label>Query count
       <select id="query-count"></select>
     </label>
-    <label>Query scenario
+    <label>Query scenario (requested hit rate)
       <select id="scenario"></select>
     </label>
     <button id="download-raw" type="button">Download selected raw repeats</button>
@@ -108,6 +108,7 @@ HTML_TEMPLATE = r"""<!doctype html>
       <span class="chip" id="hit-rate"></span>
       <span class="chip" id="time-units"></span>
       <span class="chip" id="memory-units"></span>
+      <span class="chip" id="clock-resolution"></span>
     </div>
   </section>
 
@@ -123,7 +124,7 @@ HTML_TEMPLATE = r"""<!doctype html>
     <div class="legend" id="legend"></div>
     <div class="chart-grid">
       <article class="chart-card">
-        <h3>Preparation time</h3><p>Median milliseconds, logarithmic y-axis</p>
+        <h3>Preparation time</h3><p>Median milliseconds, logarithmic x- and y-axes</p>
         <svg id="chart-preparation" viewBox="0 0 640 330"></svg>
       </article>
       <article class="chart-card">
@@ -172,8 +173,9 @@ HTML_TEMPLATE = r"""<!doctype html>
       <summary>Raw repeats</summary>
       <div class="raw-wrap">
         <table><thead><tr><th>Input</th><th class="text-left">Method</th>
-          <th>Repeat</th><th>Order</th><th>Preparation ns</th>
-          <th>Query ns</th><th>Total ns</th><th>Input SHA-256</th></tr></thead>
+          <th>Repeat</th><th>Order</th><th>Preparation calls</th>
+          <th>Query calls</th><th>Total calls</th><th>Preparation ns/call</th>
+          <th>Query ns/call</th><th>Total ns/call</th><th>Input SHA-256</th></tr></thead>
           <tbody id="raw-table"></tbody>
         </table>
       </div>
@@ -264,13 +266,17 @@ function renderChart(svgId, metric) {
   const width = 640, height = 330, left = 72, right = 20, top = 20, bottom = 58;
   const chartWidth = width - left - right;
   const chartHeight = height - top - bottom;
+  const logSizes = sizes.map(size => Math.log10(size + 1));
+  const logSizeMin = Math.min(...logSizes);
+  const logSizeMax = Math.max(...logSizes);
   const values = rows.map(row => Math.max(Number(row[metric]), 1e-9));
   let logMin = Math.log10(Math.min(...values));
   let logMax = Math.log10(Math.max(...values));
   if (Math.abs(logMax - logMin) < 1e-12) { logMin -= .5; logMax += .5; }
-  const x = index => sizes.length === 1
+  const x = size => sizes.length === 1
     ? left + chartWidth / 2
-    : left + index * chartWidth / (sizes.length - 1);
+    : left + (Math.log10(size + 1) - logSizeMin) * chartWidth /
+      (logSizeMax - logSizeMin);
   const y = value => top + chartHeight *
     (1 - (Math.log10(Math.max(value, 1e-9)) - logMin) / (logMax - logMin));
   const parts = [];
@@ -281,13 +287,13 @@ function renderChart(svgId, metric) {
     parts.push(`<line x1="${left}" y1="${yPosition}" x2="${width - right}" y2="${yPosition}" class="grid-line"/>`);
     parts.push(`<text x="${left - 8}" y="${yPosition + 4}" text-anchor="end" class="axis-label">${formatNumber(value)}</text>`);
   }
-  sizes.forEach((size, index) => {
-    parts.push(`<text x="${x(index)}" y="${height - 30}" text-anchor="middle" class="axis-label">${size.toLocaleString()}</text>`);
+  sizes.forEach(size => {
+    parts.push(`<text x="${x(size)}" y="${height - 30}" text-anchor="middle" class="axis-label">${size.toLocaleString()}</text>`);
   });
   algorithms.forEach((algorithm, algorithmIndex) => {
-    const series = sizes.map((size, index) => {
+    const series = sizes.map(size => {
       const row = rows.find(item => item.algorithm === algorithm && Number(item.array_size) === size);
-      return { x: x(index), y: y(Number(row[metric])), row };
+      return { x: x(size), y: y(Number(row[metric])), row };
     });
     const points = series.map(point => `${point.x},${point.y}`).join(" ");
     const color = colors[algorithmIndex % colors.length];
@@ -296,7 +302,7 @@ function renderChart(svgId, metric) {
       `<circle cx="${point.x}" cy="${point.y}" r="4" fill="${color}"><title>${escapeHtml(algorithm)} · n=${Number(point.row.array_size).toLocaleString()} · ${formatNumber(point.row[metric])} ms</title></circle>`
     ));
   });
-  parts.push(`<text x="${left + chartWidth / 2}" y="${height - 4}" text-anchor="middle" class="axis-title">Input length (n)</text>`);
+  parts.push(`<text x="${left + chartWidth / 2}" y="${height - 4}" text-anchor="middle" class="axis-title">Input length (log scale)</text>`);
   parts.push(`<text x="15" y="${top + chartHeight / 2}" text-anchor="middle" class="axis-title" transform="rotate(-90 15 ${top + chartHeight / 2})">Median ms (log scale)</text>`);
   svg.innerHTML = parts.join("");
 }
@@ -318,6 +324,8 @@ function renderHeader() {
     `Time: ${metadata.units.summary_timings} summary / ${metadata.units.raw_timings} raw`;
   document.getElementById("memory-units").textContent =
     `Memory: ${metadata.units.traced_memory}`;
+  document.getElementById("clock-resolution").textContent =
+    `Clock resolution: ${formatNumber(metadata.benchmark_settings.clock.resolution_ns, 3)} ns`;
 }
 
 function renderVersionComparison() {
@@ -356,9 +364,12 @@ function renderRaw() {
     return `<tr><td>${Number(benchmarkCase.array_size).toLocaleString()}</td>` +
       `<td class="text-left">${escapeHtml(row.algorithm)}</td>` +
       `<td>${row.repeat}</td><td>${row.order_position}</td>` +
-      `<td>${Number(row.preparation_ns).toLocaleString()}</td>` +
-      `<td>${Number(row.query_batch_ns).toLocaleString()}</td>` +
-      `<td>${Number(row.combined_ns).toLocaleString()}</td>` +
+      `<td>${Number(row.preparation_calls).toLocaleString()}</td>` +
+      `<td>${Number(row.query_batch_calls).toLocaleString()}</td>` +
+      `<td>${Number(row.combined_calls).toLocaleString()}</td>` +
+      `<td>${formatNumber(row.preparation_ns, 3)}</td>` +
+      `<td>${formatNumber(row.query_batch_ns, 3)}</td>` +
+      `<td>${formatNumber(row.combined_ns, 3)}</td>` +
       `<td><code>${escapeHtml(row.input_sha256.slice(0, 12))}…</code></td></tr>`;
   }).join("");
 }
@@ -379,7 +390,8 @@ function renderEnvironment() {
 function downloadRaw() {
   const rows = filteredRaw();
   const columns = ["case_id", "algorithm", "version", "repeat", "order_position",
-    "input_sha256", "preparation_ns", "query_batch_ns", "combined_ns"];
+    "input_sha256", "preparation_calls", "query_batch_calls", "combined_calls",
+    "preparation_ns", "query_batch_ns", "combined_ns"];
   const quote = value => `"${String(value).replaceAll('"', '""')}"`;
   const csv = [columns.join(","), ...rows.map(row =>
     columns.map(column => quote(row[column])).join(",")

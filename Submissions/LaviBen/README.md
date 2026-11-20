@@ -71,8 +71,8 @@ the core does not delegate to `list.index`, `bisect`, or another search helper.
 The tests were created before either implementation module. The first run
 exited with code `1` because `search_algorithms` and `synthetic_data` were
 missing. Version 1 then passed all seven original tests. After review, boundary,
-generator, and fixed-input benchmark cases were added; the final suite contains
-eleven passing tests.
+generator, fixed-input benchmark, lifetime-isolation, clock-resolution, and
+memory-scope cases were added; the final suite contains sixteen passing tests.
 
 The shared cases cover:
 
@@ -94,8 +94,9 @@ evidence of expected behavior, not a proof of correctness.
 
 `synthetic_data.py` uses a local seeded random generator and is independent of
 both the algorithms and measurement code. IDs are sampled with replacement
-from `max(1, n // 3)` possible values, so larger arrays intentionally contain
-duplicates.
+from a signed, even-valued pool of `max(1, n // 3)` values, so larger arrays
+intentionally contain duplicates. Absent queries are a seeded mixture below
+the observed minimum, inside observed gaps, and above the observed maximum.
 
 The benchmark fixes an 18-case matrix before timing:
 
@@ -109,19 +110,25 @@ pair. For `q=1`, a literal 50/50 mix is impossible; nearest-integer half-up
 rounding produces one present query, and both the requested (`0.5`) and realized
 (`1.0`) rates are saved.
 
-Five repetitions rotate method order deterministically. The benchmark records:
+Five repetitions rotate method order deterministically. Very short operations
+are adaptively batched toward a 2 ms timing window (capped at 10,000 calls).
+Every raw row saves the number of calls and elapsed nanoseconds per call. The
+timer implementation, resolution, and measured timer-call overhead are saved;
+overhead is reported but not subtracted. Prepared states and outputs stay alive
+until each timing window closes, then are released and collected before the
+next method starts. The benchmark records:
 
 - **preparation:** no index for linear search, sorting for binary search, and
   set construction for hash membership;
 - **query batch:** the complete ordered query list; and
 - **combined:** elapsed time spanning preparation and the complete batch.
 
-Raw nanosecond timings, millisecond medians, seeds, generator settings, input
-digests, Python and machine details, and Git/source versions are saved under
-`results/`. `dashboard.py` turns the JSON into a self-contained HTML dashboard
-without external JavaScript or plotting libraries. Timings describe one
-machine and run; rerun the benchmark before making environment-independent
-performance claims.
+Raw nanoseconds-per-call timings and call counts, millisecond medians, seeds,
+generator settings, input digests, Python and machine details, and Git/source
+versions are saved under `results/`. `dashboard.py` turns the JSON into a
+self-contained HTML dashboard without external JavaScript or plotting
+libraries. Timings describe one machine and run; rerun the benchmark before
+making environment-independent performance claims.
 
 Recorded medians for `n=100,000`, `q=100`, mixed queries:
 
@@ -146,13 +153,14 @@ be competitive when there is only one query, because it performs no index
 preparation. Binary search lies between those trade-offs and becomes more
 attractive when its sorted copy can serve many queries.
 
-The iterative binary-search loop caches the last index once per batch, uses
-Python's overflow-safe `(low + high) // 2` midpoint, and orders the comparison
-branches to reduce work on unsuccessful steps. The refreshed saved run made
-its `q=100` query batch faster than the preceding saved run in all nine
-size/scenario cases, with a median reduction of `13.6%`. See
-`DEVELOPMENT_LOG.md` for the accepted and rejected alternatives. Machine
-timings support these local conclusions but do not prove universal dominance.
+The preserved versions are useful implementation comparisons, not a controlled
+single-factor experiment. Iterative v2 simultaneously removes recursive calls,
+inlines the search loop into the batch, caches the last index, changes the
+midpoint expression, and reorders comparisons. Its measured difference from
+v1 therefore belongs to that complete change set; it cannot be attributed only
+to removing recursion. See `DEVELOPMENT_LOG.md` for the accepted and rejected
+alternatives. Machine timings support local conclusions but do not prove
+universal dominance.
 
 ### Interactive dashboard
 
@@ -161,8 +169,8 @@ view changes in browser JavaScript. It provides:
 
 - query-count and present/absent/mixed scenario controls;
 - requested and realized hit rates plus timing and memory units;
-- separate input-length curves for preparation, complete query batch, and
-  total elapsed time, with one curve per method;
+- separate logarithmic input-length curves for preparation, complete query
+  batch, and total elapsed time, with one curve per method;
 - a direct recursive-v1 versus iterative-v2 comparison table;
 - the chosen current/peak traced-memory rows;
 - expandable raw timing repetitions and a filtered CSV download; and
@@ -188,7 +196,7 @@ python3 dashboard.py
 git diff --exit-code -- results/runtime_dashboard.html
 ```
 
-Expected result: 11 tests pass, compilation succeeds, and the dashboard rebuilt
+Expected result: 16 tests pass, compilation succeeds, and the dashboard rebuilt
 from saved measurements is byte-for-byte unchanged. `benchmark.py` is a
 separate, explicit command because it intentionally records new
 machine-specific observations.
@@ -202,7 +210,7 @@ Memory is measured in a separate run so `tracemalloc` does not perturb runtime
 timings. For every fixed case and method:
 
 1. the input IDs and queries already exist;
-2. a fresh `tracemalloc` session starts;
+2. cyclic garbage is collected, then a fresh `tracemalloc` session starts;
 3. preparation and the complete query batch run;
 4. the prepared structure and returned output remain alive;
 5. `get_traced_memory()` records current and peak traced bytes; and
@@ -247,7 +255,7 @@ or hash set.
 | `tests/` | Shared algorithm, generator, and pipeline tests |
 | `results/benchmark_results.json` | Metadata, cases, raw timings, and summaries |
 | `results/benchmark_results.csv` | Median preparation/query/combined summary |
-| `results/raw_timings.csv` | Every repetition in raw nanoseconds |
+| `results/raw_timings.csv` | Every repetition, batch call counts, and ns/call |
 | `results/memory_results.csv` | Fresh-run current and peak traced bytes |
 | `results/input_manifest.json` | Seeds, hit rates, duplicate policy, and input digests |
 | `results/runtime_dashboard.html` | Generated runtime dashboard |
@@ -256,5 +264,7 @@ or hash set.
 
 ## Phase 2 — Audit
 
-The selected classmate implementation, reproduction steps, correctness
-findings, and performance evidence will be added here during Phase 2.
+The independent audit of Yannick Welscher's submission is under
+`phase2_welscher_yannick/`. It records the exact audited commit, separates
+reproduced defects from suspected weaknesses, and includes an executable
+reproducer plus detached-worktree instructions.

@@ -23,7 +23,7 @@ Expected results:
 
 - Python reports `3.14.7` for the recorded environment; another Python 3.10+
   interpreter may also be used.
-- `Ran 11 tests` and `OK`.
+- `Ran 16 tests` and `OK`.
 - compilation exits successfully without output;
 - dashboard generation reports that it wrote
   `results/runtime_dashboard.html` from saved results only; and
@@ -50,8 +50,8 @@ PY
 ```
 
 Expected counts are 18 cases, 360 raw timings, 72 summaries, and 72 memory
-rows. Raw time uses nanoseconds, summary time uses milliseconds, and traced
-memory uses bytes.
+rows. Raw time uses nanoseconds per call and stores each adaptive batch's call
+count, summary time uses milliseconds, and traced memory uses bytes.
 
 ## Intentionally collect new measurements
 
@@ -81,6 +81,13 @@ python3 dashboard.py \
   the input reference and creates no index.
 - Query-batch time covers the complete ordered query list.
 - Combined time directly brackets preparation and the complete query batch.
+- Short operations are adaptively batched toward 2 ms, with a 10,000-call cap.
+  Raw values are the measured batch elapsed time divided by its saved call
+  count. Timer resolution and overhead are recorded and overhead is not
+  subtracted.
+- Prepared structures and outputs are released outside timing windows, and
+  garbage is collected before the next method so cleanup is never charged to
+  another method.
 - A fresh `tracemalloc` run starts after input construction for each method.
   Input is excluded; preparation, prepared structures, and output are included.
 - The returned output stays alive when current and peak traced bytes are read.
