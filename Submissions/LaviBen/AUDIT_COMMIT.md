@@ -1,8 +1,8 @@
 # Audit target
 
-- Full commit SHA: `9e6125c615ed6ca04154d6ab7a4286e51fea57b0`
-- Short SHA: `9e6125c`
-- Annotated tag: `lavi-search-audit-v1`
+- Full commit SHA: `9e69efd14deb6339bad7002b78226dcf9e2681e6`
+- Short SHA: `9e69efd`
+- Annotated tag: `lavi-search-audit-v2`
 - Source branch: `BLAVI12:lavi/search-algorithms-final`
 - Audited path: `Submissions/LaviBen/`
 
@@ -11,14 +11,14 @@ dashboard, dependency records, and reviewer instructions. Verify the tag and
 commit with:
 
 ```bash
-git rev-parse lavi-search-audit-v1^{commit}
-git show --stat --oneline lavi-search-audit-v1
+git rev-parse lavi-search-audit-v2^{commit}
+git show --stat --oneline lavi-search-audit-v2
 ```
 
 Checkout the recorded version without changing it:
 
 ```bash
-git checkout --detach 9e6125c615ed6ca04154d6ab7a4286e51fea57b0
+git checkout --detach 9e69efd14deb6339bad7002b78226dcf9e2681e6
 cd Submissions/LaviBen
 python3 -m unittest discover -s tests -v
 ```
