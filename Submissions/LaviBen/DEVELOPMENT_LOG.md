@@ -202,16 +202,17 @@ The accepted revision:
   reducing comparisons on many unsuccessful search steps.
 
 In a focused 100-query mixed-case check, the accepted loop reduced median query
-time by about 14--16% at the three tested input lengths. The subsequent full
-18-case validation made its `q=100` query batch faster in all nine
-size/scenario combinations; the median reduction relative to the saved run was
-`12.8%`. A lower-bound-style loop was rejected even though it was fastest for
-all-absent queries: it was slower for all-present queries and was not the best
-balanced choice across the three required scenarios. A `for`/`else`
-linear-search rewrite was also rejected because it was neutral or slower in
-most measurements. The hash-set list comprehension, `set(ids)`, and
-`sorted(ids)` were retained because they already delegate their permitted
-operations to optimized standard-library code.
+time by about 14--16% at the three tested input lengths. The clean full run from
+code commit `1e5e328` made its `q=100` query batch faster than the preceding
+saved run in all nine size/scenario combinations; the median reduction was
+`13.6%`. For `n=100,000`, `q=100`, mixed queries, iterative query time fell from
+`0.106958 ms` to `0.088084 ms`. A lower-bound-style loop was rejected even
+though it was fastest for all-absent queries: it was slower for all-present
+queries and was not the best balanced choice across the three required
+scenarios. A `for`/`else` linear-search rewrite was also rejected because it
+was neutral or slower in most measurements. The hash-set list comprehension,
+`set(ids)`, and `sorted(ids)` were retained because they already delegate their
+permitted operations to optimized standard-library code.
 
 These measurements support a local implementation decision; they do not prove
 that one search strategy is universally fastest on every machine or workload.

@@ -127,13 +127,13 @@ Recorded medians for `n=100,000`, `q=100`, mixed queries:
 
 | Implementation | Preparation (ms) | Query batch (ms) | Combined (ms) |
 |---|---:|---:|---:|
-| Linear search | 0.070625 | 51.087500 | 51.210208 |
-| Binary search recursive v1 | 10.470625 | 0.129917 | 10.600250 |
-| Binary search iterative v2 | 10.623333 | 0.106958 | 10.737292 |
-| Hash set membership | 1.877125 | 0.005208 | 1.882458 |
+| Linear search | 0.072416 | 51.197125 | 51.269000 |
+| Binary search recursive v1 | 10.467709 | 0.127083 | 10.595000 |
+| Binary search iterative v2 | 10.495750 | 0.088084 | 10.586042 |
+| Hash set membership | 1.871250 | 0.004750 | 1.875709 |
 
 This run used Python `3.14.7` on `arm64` and clean submission code commit
-`d4fd34f`. Full machine fields, source SHA-256, and raw observations are in
+`1e5e328`. Full machine fields, source SHA-256, and raw observations are in
 `results/benchmark_results.json`.
 
 ### Performance interpretation
@@ -146,14 +146,13 @@ be competitive when there is only one query, because it performs no index
 preparation. Binary search lies between those trade-offs and becomes more
 attractive when its sorted copy can serve many queries.
 
-The iterative binary-search loop was subsequently tightened by caching the
-last index once per batch, using Python's overflow-safe `(low + high) // 2`
-midpoint, and ordering the comparison branches to reduce work on unsuccessful
-steps. A complete temporary validation run made its `q=100` query batch faster
-in all nine size/scenario cases, with a median reduction of `12.8%` relative to
-the saved pre-optimization run. See `DEVELOPMENT_LOG.md` for the accepted and
-rejected alternatives. Machine timings support these local conclusions but do
-not prove universal dominance.
+The iterative binary-search loop caches the last index once per batch, uses
+Python's overflow-safe `(low + high) // 2` midpoint, and orders the comparison
+branches to reduce work on unsuccessful steps. The refreshed saved run made
+its `q=100` query batch faster than the preceding saved run in all nine
+size/scenario cases, with a median reduction of `13.6%`. See
+`DEVELOPMENT_LOG.md` for the accepted and rejected alternatives. Machine
+timings support these local conclusions but do not prove universal dominance.
 
 ### Interactive dashboard
 
