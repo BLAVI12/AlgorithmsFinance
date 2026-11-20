@@ -137,3 +137,27 @@ It produced 18 input cases, 360 raw observations, and 72 median summaries. For
 and `1.882083 ms` (hash set). The iterative binary query batch itself was
 faster than the recursive batch (`0.104333 ms` versus `0.127834 ms`), while
 sorting dominated both methods' combined time in this run.
+
+## 6. Memory measurement revision
+
+Memory-evidence tests were added before implementation. The baseline exited
+with code `1` because `BenchmarkRun` had no `memory_results` and no memory CSV
+artifact existed.
+
+The revision adds a separate memory phase after runtime timing. Every
+case/method starts a fresh `tracemalloc` session after the input has already
+been built. Preparation and the complete query batch run inside tracing. The
+prepared value and returned result remain referenced when current and peak
+traced bytes are read, after which tracing stops. This means:
+
+- input IDs and query tuples are excluded;
+- the output list is included;
+- binary sorted copies and the hash set are included;
+- linear search has no allocated preparation structure; and
+- temporary Python allocations may be present in the peak.
+
+RSS sampling was rejected for this submission because it is optional, adds a
+dependency or platform-specific code, includes interpreter/process overhead,
+and can miss brief peaks. The documentation explicitly avoids treating
+`tracemalloc` peak bytes as a direct measurement of algorithmic auxiliary
+space.

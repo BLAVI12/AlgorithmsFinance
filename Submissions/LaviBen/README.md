@@ -130,6 +130,29 @@ This run used Python `3.14.7` on `arm64` and clean submission code commit
 `b122ea5`. Full machine fields, source SHA-256, and raw observations are in
 `results/benchmark_results.json`.
 
+### Memory measurement
+
+Memory is measured in a separate run so `tracemalloc` does not perturb runtime
+timings. For every fixed case and method:
+
+1. the input IDs and queries already exist;
+2. a fresh `tracemalloc` session starts;
+3. preparation and the complete query batch run;
+4. the prepared structure and returned output remain alive;
+5. `get_traced_memory()` records current and peak traced bytes; and
+6. tracing stops before the next method.
+
+Therefore, the original input is **excluded**, while the output is **included**.
+Preparation is included: binary-search sorted copies and hash sets are counted;
+linear search creates no separate prepared index. Temporary Python allocations
+during preparation and querying can affect the peak.
+
+`tracemalloc` does not capture every native allocation, and traced bytes are not
+the same as formal auxiliary-space complexity. RSS is not recorded: it would
+include the Python interpreter and unrelated process overhead, and periodic
+sampling could miss brief peaks. Memory results are stored in bytes in
+`results/memory_results.csv` and in the complete JSON evidence.
+
 ## Project layout
 
 | Path | Purpose |
@@ -142,6 +165,7 @@ This run used Python `3.14.7` on `arm64` and clean submission code commit
 | `results/benchmark_results.json` | Metadata, cases, raw timings, and summaries |
 | `results/benchmark_results.csv` | Median preparation/query/combined summary |
 | `results/raw_timings.csv` | Every repetition in raw nanoseconds |
+| `results/memory_results.csv` | Fresh-run current and peak traced bytes |
 | `results/input_manifest.json` | Seeds, hit rates, duplicate policy, and input digests |
 | `results/runtime_dashboard.html` | Generated runtime dashboard |
 | `DEVELOPMENT_LOG.md` | Test-first, trace, revision, and AI-use evidence |

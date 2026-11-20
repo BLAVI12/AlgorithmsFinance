@@ -27,6 +27,7 @@ class BenchmarkPipelineTests(unittest.TestCase):
         self.assertEqual(len(run.cases), expected_cases)
         self.assertEqual(len(run.raw_results), expected_cases * len(ALGORITHMS) * 2)
         self.assertEqual(len(run.summary), expected_cases * len(ALGORITHMS))
+        self.assertEqual(len(run.memory_results), expected_cases * len(ALGORITHMS))
 
         for case in run.cases:
             case_rows = [row for row in run.raw_results if row.case_id == case.case_id]
@@ -39,9 +40,19 @@ class BenchmarkPipelineTests(unittest.TestCase):
             self.assertTrue(all(row.combined_ns >= row.query_batch_ns for row in case_rows))
 
         self.assertEqual(run.metadata["units"]["raw_timings"], "nanoseconds")
+        self.assertEqual(run.metadata["units"]["traced_memory"], "bytes")
         self.assertIn("python_version", run.metadata["environment"])
         self.assertIn("machine", run.metadata["environment"])
         self.assertIn("git_commit", run.metadata["code_version"])
+
+        for memory_result in run.memory_results:
+            self.assertGreaterEqual(
+                memory_result.peak_traced_bytes,
+                memory_result.current_traced_bytes,
+            )
+            self.assertFalse(memory_result.input_included)
+            self.assertTrue(memory_result.preparation_included)
+            self.assertTrue(memory_result.output_included)
 
     def test_results_and_dashboard_are_reproducible_artifacts(self) -> None:
         run = run_benchmarks(
@@ -68,10 +79,12 @@ class BenchmarkPipelineTests(unittest.TestCase):
             self.assertEqual(len(payload["summary"]), len(ALGORITHMS))
             self.assertTrue(artifacts["raw_csv"].is_file())
             self.assertTrue(artifacts["summary_csv"].is_file())
+            self.assertTrue(artifacts["memory_csv"].is_file())
             self.assertTrue(artifacts["input_manifest_json"].is_file())
             self.assertIn("Search runtime dashboard", dashboard)
             self.assertIn("Binary search iterative v2", dashboard)
             self.assertIn("Preparation median", dashboard)
+            self.assertIn("Peak traced memory", dashboard)
 
 
 if __name__ == "__main__":

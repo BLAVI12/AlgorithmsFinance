@@ -11,6 +11,7 @@ import os
 import platform
 import subprocess
 import sys
+import tracemalloc
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -125,11 +126,28 @@ class SummaryResult:
 
 
 @dataclass(frozen=True)
+class MemoryResult:
+    case_id: str
+    array_size: int
+    query_count: int
+    scenario: str
+    algorithm: str
+    version: str
+    input_sha256: str
+    current_traced_bytes: int
+    peak_traced_bytes: int
+    input_included: bool
+    preparation_included: bool
+    output_included: bool
+
+
+@dataclass(frozen=True)
 class BenchmarkRun:
     metadata: dict[str, Any]
     cases: list[BenchmarkCase]
     raw_results: list[RawTiming]
     summary: list[SummaryResult]
+    memory_results: list[MemoryResult]
 
 
 @dataclass(frozen=True)
@@ -194,6 +212,7 @@ def _metadata(
         "units": {
             "raw_timings": "nanoseconds",
             "summary_timings": "milliseconds",
+            "traced_memory": "bytes",
         },
         "environment": {
             "python_version": platform.python_version(),
@@ -230,6 +249,20 @@ def _metadata(
             "query_order": "seeded shuffle",
             "mixed_requested_hit_rate": 0.5,
             "hit_count_rounding": "nearest integer, halves rounded up",
+        },
+        "memory_settings": {
+            "tool": "tracemalloc",
+            "fresh_tracing_run_per_case_and_method": True,
+            "input_built_before_tracing": True,
+            "input_included": False,
+            "preparation_included": True,
+            "prepared_structure_alive_at_read": True,
+            "output_included": True,
+            "output_alive_at_read": True,
+            "rss_measured": False,
+            "limitation": (
+                "tracemalloc tracks Python allocations, not every native allocation"
+            ),
         },
     }
 
@@ -387,6 +420,52 @@ def _summarize(
     return summary
 
 
+def _measure_memory(fixed_inputs: Sequence[_FixedInput]) -> list[MemoryResult]:
+    """Measure Python allocations in a fresh tracing run per method and case."""
+
+    if tracemalloc.is_tracing():
+        raise RuntimeError("tracemalloc must be stopped before memory measurement")
+
+    memory_results: list[MemoryResult] = []
+    for fixed_input in fixed_inputs:
+        lookup = set(fixed_input.ids)
+        expected = [query in lookup for query in fixed_input.queries]
+
+        for algorithm in ALGORITHMS:
+            tracemalloc.start()
+            try:
+                prepared = algorithm.prepare(fixed_input.ids)
+                result = algorithm.query_batch(prepared, fixed_input.queries)
+                current_bytes, peak_bytes = tracemalloc.get_traced_memory()
+            finally:
+                tracemalloc.stop()
+
+            if result != expected:
+                raise AssertionError(
+                    f"{algorithm.name} returned incorrect results during memory run"
+                )
+
+            memory_results.append(
+                MemoryResult(
+                    case_id=fixed_input.case.case_id,
+                    array_size=fixed_input.case.array_size,
+                    query_count=fixed_input.case.query_count,
+                    scenario=fixed_input.case.scenario,
+                    algorithm=algorithm.name,
+                    version=algorithm.version,
+                    input_sha256=fixed_input.case.input_sha256,
+                    current_traced_bytes=current_bytes,
+                    peak_traced_bytes=peak_bytes,
+                    input_included=False,
+                    preparation_included=True,
+                    output_included=True,
+                )
+            )
+            del prepared, result
+
+    return memory_results
+
+
 def run_benchmarks(
     sizes: Sequence[int] = DEFAULT_SIZES,
     query_counts: Sequence[int] = DEFAULT_QUERY_COUNTS,
@@ -406,6 +485,7 @@ def run_benchmarks(
     raw_results = _measure_fixed_inputs(fixed_inputs, repeats=repeats)
     cases = [fixed_input.case for fixed_input in fixed_inputs]
     summary = _summarize(cases, raw_results, repeats=repeats)
+    memory_results = _measure_memory(fixed_inputs)
     return BenchmarkRun(
         metadata=_metadata(
             sizes=sizes,
@@ -417,6 +497,7 @@ def run_benchmarks(
         cases=cases,
         raw_results=raw_results,
         summary=summary,
+        memory_results=memory_results,
     )
 
 
@@ -438,11 +519,13 @@ def write_results(run: BenchmarkRun, output_directory: Path) -> dict[str, Path]:
     results_json = output_directory / "benchmark_results.json"
     summary_csv = output_directory / "benchmark_results.csv"
     raw_csv = output_directory / "raw_timings.csv"
+    memory_csv = output_directory / "memory_results.csv"
     input_manifest_json = output_directory / "input_manifest.json"
 
     case_rows = [asdict(case) for case in run.cases]
     raw_rows = [asdict(result) for result in run.raw_results]
     summary_rows = [asdict(result) for result in run.summary]
+    memory_rows = [asdict(result) for result in run.memory_results]
     results_json.write_text(
         json.dumps(
             {
@@ -450,6 +533,7 @@ def write_results(run: BenchmarkRun, output_directory: Path) -> dict[str, Path]:
                 "cases": case_rows,
                 "raw_results": raw_rows,
                 "summary": summary_rows,
+                "memory_results": memory_rows,
             },
             indent=2,
         )
@@ -473,10 +557,12 @@ def write_results(run: BenchmarkRun, output_directory: Path) -> dict[str, Path]:
         list(SummaryResult.__dataclass_fields__),
     )
     _write_csv(raw_csv, raw_rows, list(RawTiming.__dataclass_fields__))
+    _write_csv(memory_csv, memory_rows, list(MemoryResult.__dataclass_fields__))
     return {
         "results_json": results_json,
         "summary_csv": summary_csv,
         "raw_csv": raw_csv,
+        "memory_csv": memory_csv,
         "input_manifest_json": input_manifest_json,
     }
 

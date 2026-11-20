@@ -113,13 +113,17 @@ def build_dashboard(results_path: Path, output_path: Path) -> Path:
     summary = payload.get("summary", [])
     cases = payload.get("cases", [])
     raw_results = payload.get("raw_results", [])
+    memory_results = payload.get("memory_results", [])
     metadata = payload.get("metadata", {})
-    if not summary or not cases or not raw_results:
-        raise ValueError("benchmark JSON is missing cases, raw results, or summary")
+    if not summary or not cases or not raw_results or not memory_results:
+        raise ValueError(
+            "benchmark JSON is missing cases, timings, memory results, or summary"
+        )
 
     settings = metadata["benchmark_settings"]
     environment = metadata["environment"]
     code_version = metadata["code_version"]
+    memory_settings = metadata["memory_settings"]
     largest_size = max(int(record["array_size"]) for record in summary)
     focus_query_count = max(int(record["query_count"]) for record in summary)
     available_scenarios = {str(record["scenario"]) for record in summary}
@@ -175,6 +179,25 @@ def build_dashboard(results_path: Path, output_path: Path) -> Path:
             ),
         )
     )
+    memory_rows = "".join(
+        "<tr>"
+        f'<td>{int(record["array_size"]):,}</td>'
+        f'<td>{int(record["query_count"]):,}</td>'
+        f'<td>{html.escape(str(record["scenario"]))}</td>'
+        f'<td>{html.escape(str(record["algorithm"]))}</td>'
+        f'<td>{float(record["current_traced_bytes"]) / 1024:,.2f}</td>'
+        f'<td>{float(record["peak_traced_bytes"]) / 1024:,.2f}</td>'
+        "</tr>"
+        for record in sorted(
+            memory_results,
+            key=lambda row: (
+                int(row["array_size"]),
+                int(row["query_count"]),
+                str(row["scenario"]),
+                str(row["algorithm"]),
+            ),
+        )
+    )
 
     document = f"""<!doctype html>
 <html lang="en"><head>
@@ -222,6 +245,7 @@ def build_dashboard(results_path: Path, output_path: Path) -> Path:
   <section class="cards">
     <div class="card"><span class="label">Fixed cases</span><b>{len(cases)}</b></div>
     <div class="card"><span class="label">Raw timing rows</span><b>{len(raw_results):,}</b></div>
+    <div class="card"><span class="label">Memory runs</span><b>{len(memory_results):,}</b></div>
     <div class="card"><span class="label">Largest array</span><b>{largest_size:,}</b></div>
     <div class="card">
       <span class="label">Fastest · n={largest_size:,},
@@ -241,6 +265,16 @@ def build_dashboard(results_path: Path, output_path: Path) -> Path:
       <th>Preparation median (ms)</th><th>Query batch median (ms)</th><th>Combined median (ms)</th>
     </tr></thead><tbody>{table_rows}</tbody></table>
   </section>
+  <section class="panel"><h2>Current and peak traced memory</h2>
+    <table><thead><tr><th>n</th><th>q</th><th>Scenario</th><th>Algorithm</th>
+      <th>Current traced memory (KiB)</th><th>Peak traced memory (KiB)</th>
+    </tr></thead><tbody>{memory_rows}</tbody></table>
+    <p class="note">The input is built before each fresh tracing session and is
+      excluded. Preparation is included, so binary sorted copies and hash sets
+      are counted. The prepared structure and returned output remain alive when
+      current and peak bytes are read. <code>tracemalloc</code> tracks Python
+      allocations but not every native allocation. RSS was not measured.</p>
+  </section>
   <section class="panel"><h2>Reproducibility metadata</h2>
     <p>Python {html.escape(str(environment["python_version"]))} ·
       {html.escape(str(environment["system"]))}
@@ -253,6 +287,10 @@ def build_dashboard(results_path: Path, output_path: Path) -> Path:
     <p>Base seed {settings["base_seed"]}; case-specific seeds and input SHA-256
       digests are saved in <code>input_manifest.json</code>. Raw units are
       nanoseconds; summary units are milliseconds.</p>
+    <p>Memory unit: bytes. Input included:
+      {str(memory_settings["input_included"]).lower()}; preparation included:
+      {str(memory_settings["preparation_included"]).lower()}; output included:
+      {str(memory_settings["output_included"]).lower()}.</p>
   </section>
 </main></body></html>
 """
