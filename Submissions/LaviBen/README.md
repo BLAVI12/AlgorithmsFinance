@@ -18,6 +18,8 @@ beside the revised iterative version for direct comparison.
 ## Quick start
 
 Python 3.10 or newer is sufficient; there are no third-party dependencies.
+The recorded environment uses CPython 3.14.7 (`.python-version`), and
+`requirements.txt` explicitly records the absence of third-party packages.
 
 ```bash
 cd Submissions/LaviBen
@@ -153,6 +155,29 @@ Run only `python3 dashboard.py` to rebuild the view from existing measurements.
 Run `python3 benchmark.py` separately only when intentionally collecting a new
 measurement set.
 
+## Reviewer reproduction
+
+The exact immutable review commit is recorded in
+[`AUDIT_COMMIT.md`](AUDIT_COMMIT.md). Follow
+[`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) to verify that commit without
+editing it. The short verification path is:
+
+```bash
+cd Submissions/LaviBen
+python3 -m unittest discover -s tests -v
+python3 -m compileall -q .
+python3 dashboard.py
+git diff --exit-code -- results/runtime_dashboard.html
+```
+
+Expected result: 11 tests pass, compilation succeeds, and the dashboard rebuilt
+from saved measurements is byte-for-byte unchanged. `benchmark.py` is a
+separate, explicit command because it intentionally records new
+machine-specific observations.
+
+Docker packaging was optional and was not selected, so this submission does
+not include a `Dockerfile`.
+
 ### Memory measurement
 
 Memory is measured in a separate run so `tracemalloc` does not perturb runtime
@@ -197,6 +222,10 @@ or hash set.
 | `synthetic_data.py` | Deterministic input generation |
 | `benchmark.py` | Fixed-input preparation/query/combined measurement |
 | `dashboard.py` | Interactive HTML app generated from saved JSON only |
+| `.python-version` | Recorded CPython version (`3.14.7`) |
+| `requirements.txt` | Explicit zero-third-party dependency manifest |
+| `REPRODUCIBILITY.md` | Exact reviewer and remeasurement commands |
+| `AUDIT_COMMIT.md` | Immutable commit selected for audit |
 | `tests/` | Shared algorithm, generator, and pipeline tests |
 | `results/benchmark_results.json` | Metadata, cases, raw timings, and summaries |
 | `results/benchmark_results.csv` | Median preparation/query/combined summary |

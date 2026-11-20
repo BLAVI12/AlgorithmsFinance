@@ -1,0 +1,2 @@
+# No third-party Python packages are required.
+# Tested with CPython 3.14.7; the implementation supports Python 3.10+.

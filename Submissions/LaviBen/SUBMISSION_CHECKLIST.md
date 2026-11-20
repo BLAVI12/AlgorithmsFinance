@@ -45,6 +45,10 @@
 | Show query count, hit rate, units, and memory | Complete | Dashboard controls, chips, and memory table |
 | Load saved data for view changes | Complete | Embedded JSON filtered entirely in browser JavaScript |
 | Expose raw repeats and environment | Complete | Expandable raw table/download and metadata details |
+| Record dependency versions | Complete | `.python-version` and zero-dependency `requirements.txt` |
+| Provide exact reviewer commands | Complete | `REPRODUCIBILITY.md` and README reproduction section |
+| Record immutable audit commit | Complete | `AUDIT_COMMIT.md` on the submission branch |
+| State Docker packaging choice | Complete | Runbook records that optional Docker was not selected |
 
 ## Correctness reasoning
 
