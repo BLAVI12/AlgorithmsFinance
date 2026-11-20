@@ -270,3 +270,12 @@ so reviewers can judge measurement scale directly. The audit reproduction
 instructions were also corrected to create a detached worktree at Yannick's
 exact recorded commit; running the verifier against the moving review branch
 would correctly fail its commit guard.
+
+The final canonical run used clean measurement-code commit `050bfc8` and
+produced 18 cases, 360 raw timing rows, 72 summary rows, and 72 fresh memory
+rows. It recorded a `41.667 ns` clock resolution and `42 ns` median timer-call
+overhead. The shortest retained timing batch still spanned more than 47,000 ns
+(over 1,100 reported clock-resolution intervals), while q=1 hash query batches
+used 586--3,425 calls. Yannick's unchanged B1 reproducer then reported
+`Bug not reproduced`; the unchanged B2 reproducer was rejected at input
+validation with `ValueError: duplicate array sizes are not allowed`.

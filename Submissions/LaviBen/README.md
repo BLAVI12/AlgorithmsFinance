@@ -139,13 +139,15 @@ Recorded medians for `n=100,000`, `q=100`, mixed queries:
 
 | Implementation | Preparation (ms) | Query batch (ms) | Combined (ms) |
 |---|---:|---:|---:|
-| Linear search | 0.072416 | 51.197125 | 51.269000 |
-| Binary search recursive v1 | 10.467709 | 0.127083 | 10.595000 |
-| Binary search iterative v2 | 10.495750 | 0.088084 | 10.586042 |
-| Hash set membership | 1.871250 | 0.004750 | 1.875709 |
+| Linear search | 0.000028 | 52.265750 | 52.733458 |
+| Binary search recursive v1 | 10.539209 | 0.123992 | 10.618542 |
+| Binary search iterative v2 | 10.441750 | 0.086023 | 10.514750 |
+| Hash set membership | 1.311521 | 0.001638 | 1.247062 |
 
 This run used Python `3.14.7` on `arm64` and clean submission code commit
-`1e5e328`. Full machine fields, source SHA-256, and raw observations are in
+`050bfc8`. The recorded clock resolution is `41.667 ns`, median timer-call
+overhead is `42 ns`, and q=1 hash query batches contain 586--3,425 calls.
+Full machine fields, source SHA-256, batch counts, and raw observations are in
 `results/benchmark_results.json`.
 
 ### Performance interpretation
@@ -237,10 +239,10 @@ Recorded traced memory for `n=100,000`, `q=100`, mixed queries:
 
 | Implementation | Current traced bytes | Peak traced bytes | Peak KiB |
 |---|---:|---:|---:|
-| Linear search | 864 | 864 | 0.84 |
-| Binary search recursive v1 | 801,120 | 1,199,824 | 1,171.70 |
-| Binary search iterative v2 | 800,864 | 1,199,824 | 1,171.70 |
-| Hash set membership | 2,098,232 | 2,621,656 | 2,560.21 |
+| Linear search | 1,016 | 1,016 | 0.99 |
+| Binary search recursive v1 | 802,216 | 1,199,952 | 1,171.83 |
+| Binary search iterative v2 | 801,288 | 1,199,952 | 1,171.83 |
+| Hash set membership | 2,098,336 | 2,621,704 | 2,560.26 |
 
 These figures exclude the prebuilt 100,000-entry input and query tuple. They
 include the returned 100-Boolean output and, where applicable, the sorted copy

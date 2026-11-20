@@ -1,73 +1,73 @@
 case_id,array_size,query_count,scenario,algorithm,version,repeats,preparation_median_ms,query_batch_median_ms,combined_median_ms
-n1000_q1_all_present_seed2026,1000,1,all_present,Linear search,v1,5,2.8e-05,0.001117,0.001129
-n1000_q1_all_present_seed2026,1000,1,all_present,Binary search recursive v1,v1,5,0.042174,0.00051,0.042208
-n1000_q1_all_present_seed2026,1000,1,all_present,Binary search iterative v2,v2,5,0.041036,0.000405,0.038575
-n1000_q1_all_present_seed2026,1000,1,all_present,Hash set membership,stdlib-set,5,0.008331,0.000103,0.007164
-n1000_q1_all_absent_seed2027,1000,1,all_absent,Linear search,v1,5,2.9e-05,0.010886,0.010455
-n1000_q1_all_absent_seed2027,1000,1,all_absent,Binary search recursive v1,v1,5,0.040223,0.000723,0.038047
-n1000_q1_all_absent_seed2027,1000,1,all_absent,Binary search iterative v2,v2,5,0.04047,0.000543,0.039895
-n1000_q1_all_absent_seed2027,1000,1,all_absent,Hash set membership,stdlib-set,5,0.006586,8.9e-05,0.007
-n1000_q1_mixed_seed2028,1000,1,mixed,Linear search,v1,5,2.8e-05,0.006441,0.006502
-n1000_q1_mixed_seed2028,1000,1,mixed,Binary search recursive v1,v1,5,0.040905,0.000662,0.039828
-n1000_q1_mixed_seed2028,1000,1,mixed,Binary search iterative v2,v2,5,0.041187,0.000505,0.038388
-n1000_q1_mixed_seed2028,1000,1,mixed,Hash set membership,stdlib-set,5,0.006961,9.1e-05,0.006784
-n1000_q100_all_present_seed2029,1000,100,all_present,Linear search,v1,5,2.8e-05,0.206154,0.206088
-n1000_q100_all_present_seed2029,1000,100,all_present,Binary search recursive v1,v1,5,0.040177,0.053779,0.093815
-n1000_q100_all_present_seed2029,1000,100,all_present,Binary search iterative v2,v2,5,0.042308,0.04104,0.079683
-n1000_q100_all_present_seed2029,1000,100,all_present,Hash set membership,stdlib-set,5,0.007153,0.001723,0.008131
-n1000_q100_all_absent_seed2030,1000,100,all_absent,Linear search,v1,5,2.9e-05,1.02825,1.047187
-n1000_q100_all_absent_seed2030,1000,100,all_absent,Binary search recursive v1,v1,5,0.040719,0.07308,0.113058
-n1000_q100_all_absent_seed2030,1000,100,all_absent,Binary search iterative v2,v2,5,0.04156,0.053948,0.092635
-n1000_q100_all_absent_seed2030,1000,100,all_absent,Hash set membership,stdlib-set,5,0.006912,0.001736,0.008375
-n1000_q100_mixed_seed2031,1000,100,mixed,Linear search,v1,5,2.8e-05,0.616875,0.622
-n1000_q100_mixed_seed2031,1000,100,mixed,Binary search recursive v1,v1,5,0.041876,0.065913,0.106009
-n1000_q100_mixed_seed2031,1000,100,mixed,Binary search iterative v2,v2,5,0.041025,0.048047,0.087034
-n1000_q100_mixed_seed2031,1000,100,mixed,Hash set membership,stdlib-set,5,0.006532,0.001687,0.007755
-n10000_q1_all_present_seed2032,10000,1,all_present,Linear search,v1,5,2.8e-05,0.038973,0.039449
-n10000_q1_all_present_seed2032,10000,1,all_present,Binary search recursive v1,v1,5,0.807917,0.00089,0.790819
-n10000_q1_all_present_seed2032,10000,1,all_present,Binary search iterative v2,v2,5,0.792542,0.00069,0.80257
-n10000_q1_all_present_seed2032,10000,1,all_present,Hash set membership,stdlib-set,5,0.09263,9.2e-05,0.085087
-n10000_q1_all_absent_seed2033,10000,1,all_absent,Linear search,v1,5,2.8e-05,0.088346,0.088511
-n10000_q1_all_absent_seed2033,10000,1,all_absent,Binary search recursive v1,v1,5,0.789681,0.000997,0.784597
-n10000_q1_all_absent_seed2033,10000,1,all_absent,Binary search iterative v2,v2,5,0.791167,0.000771,0.78193
-n10000_q1_all_absent_seed2033,10000,1,all_absent,Hash set membership,stdlib-set,5,0.090285,8.8e-05,0.083615
-n10000_q1_mixed_seed2034,10000,1,mixed,Linear search,v1,5,2.8e-05,0.005178,0.005199
-n10000_q1_mixed_seed2034,10000,1,mixed,Binary search recursive v1,v1,5,0.803208,0.000803,0.790375
-n10000_q1_mixed_seed2034,10000,1,mixed,Binary search iterative v2,v2,5,0.798972,0.000583,0.800403
-n10000_q1_mixed_seed2034,10000,1,mixed,Hash set membership,stdlib-set,5,0.091443,8.7e-05,0.082496
-n10000_q100_all_present_seed2035,10000,100,all_present,Linear search,v1,5,2.8e-05,1.93425,1.941584
-n10000_q100_all_present_seed2035,10000,100,all_present,Binary search recursive v1,v1,5,0.79493,0.084845,0.878333
-n10000_q100_all_present_seed2035,10000,100,all_present,Binary search iterative v2,v2,5,0.795264,0.063403,0.863417
-n10000_q100_all_present_seed2035,10000,100,all_present,Hash set membership,stdlib-set,5,0.090035,0.001737,0.085505
-n10000_q100_all_absent_seed2036,10000,100,all_absent,Linear search,v1,5,2.8e-05,8.924959,8.919625
-n10000_q100_all_absent_seed2036,10000,100,all_absent,Binary search recursive v1,v1,5,0.806486,0.102825,0.906333
-n10000_q100_all_absent_seed2036,10000,100,all_absent,Binary search iterative v2,v2,5,0.810167,0.073773,0.877958
-n10000_q100_all_absent_seed2036,10000,100,all_absent,Hash set membership,stdlib-set,5,0.092235,0.001757,0.084283
-n10000_q100_mixed_seed2037,10000,100,mixed,Linear search,v1,5,2.9e-05,5.530208,5.510208
-n10000_q100_mixed_seed2037,10000,100,mixed,Binary search recursive v1,v1,5,0.804792,0.091773,0.879542
-n10000_q100_mixed_seed2037,10000,100,mixed,Binary search iterative v2,v2,5,0.792375,0.067124,0.864555
-n10000_q100_mixed_seed2037,10000,100,mixed,Hash set membership,stdlib-set,5,0.092442,0.001664,0.085069
-n100000_q1_all_present_seed2038,100000,1,all_present,Linear search,v1,5,2.9e-05,0.161344,0.158734
-n100000_q1_all_present_seed2038,100000,1,all_present,Binary search recursive v1,v1,5,10.395708,0.001051,10.388167
-n100000_q1_all_present_seed2038,100000,1,all_present,Binary search iterative v2,v2,5,10.372583,0.000874,10.433333
-n100000_q1_all_present_seed2038,100000,1,all_present,Hash set membership,stdlib-set,5,1.290312,0.000101,1.241459
-n100000_q1_all_absent_seed2039,100000,1,all_absent,Linear search,v1,5,2.8e-05,0.899486,0.888847
-n100000_q1_all_absent_seed2039,100000,1,all_absent,Binary search recursive v1,v1,5,10.562875,0.001227,10.435583
-n100000_q1_all_absent_seed2039,100000,1,all_absent,Binary search iterative v2,v2,5,10.407834,0.000961,10.390625
-n100000_q1_all_absent_seed2039,100000,1,all_absent,Hash set membership,stdlib-set,5,1.256104,9.3e-05,1.269834
-n100000_q1_mixed_seed2040,100000,1,mixed,Linear search,v1,5,2.9e-05,0.060773,0.060476
-n100000_q1_mixed_seed2040,100000,1,mixed,Binary search recursive v1,v1,5,10.4875,0.001144,10.430458
-n100000_q1_mixed_seed2040,100000,1,mixed,Binary search iterative v2,v2,5,10.541834,0.000962,10.433958
-n100000_q1_mixed_seed2040,100000,1,mixed,Hash set membership,stdlib-set,5,1.270271,9.7e-05,1.249958
-n100000_q100_all_present_seed2041,100000,100,all_present,Linear search,v1,5,2.9e-05,17.421167,17.345792
-n100000_q100_all_present_seed2041,100000,100,all_present,Binary search recursive v1,v1,5,10.579917,0.11651,10.629167
-n100000_q100_all_present_seed2041,100000,100,all_present,Binary search iterative v2,v2,5,10.375416,0.084735,10.61925
-n100000_q100_all_present_seed2041,100000,100,all_present,Hash set membership,stdlib-set,5,1.2755,0.001845,1.263688
-n100000_q100_all_absent_seed2042,100000,100,all_absent,Linear search,v1,5,2.9e-05,89.315334,89.239125
-n100000_q100_all_absent_seed2042,100000,100,all_absent,Binary search recursive v1,v1,5,10.504,0.124183,10.570041
-n100000_q100_all_absent_seed2042,100000,100,all_absent,Binary search iterative v2,v2,5,10.498458,0.090352,10.530917
-n100000_q100_all_absent_seed2042,100000,100,all_absent,Hash set membership,stdlib-set,5,1.281625,0.001799,1.255479
-n100000_q100_mixed_seed2043,100000,100,mixed,Linear search,v1,5,2.8e-05,52.787833,52.601083
-n100000_q100_mixed_seed2043,100000,100,mixed,Binary search recursive v1,v1,5,10.549542,0.120486,10.782458
-n100000_q100_mixed_seed2043,100000,100,mixed,Binary search iterative v2,v2,5,10.596958,0.087433,10.655167
-n100000_q100_mixed_seed2043,100000,100,mixed,Hash set membership,stdlib-set,5,1.304458,0.001634,1.260479
+n1000_q1_all_present_seed2026,1000,1,all_present,Linear search,v1,5,2.8e-05,0.001104,0.001128
+n1000_q1_all_present_seed2026,1000,1,all_present,Binary search recursive v1,v1,5,0.040771,0.0005,0.038173
+n1000_q1_all_present_seed2026,1000,1,all_present,Binary search iterative v2,v2,5,0.040872,0.000388,0.037788
+n1000_q1_all_present_seed2026,1000,1,all_present,Hash set membership,stdlib-set,5,0.007724,9.2e-05,0.007361
+n1000_q1_all_absent_seed2027,1000,1,all_absent,Linear search,v1,5,2.8e-05,0.010403,0.010471
+n1000_q1_all_absent_seed2027,1000,1,all_absent,Binary search recursive v1,v1,5,0.040255,0.000718,0.038666
+n1000_q1_all_absent_seed2027,1000,1,all_absent,Binary search iterative v2,v2,5,0.040549,0.000545,0.041438
+n1000_q1_all_absent_seed2027,1000,1,all_absent,Hash set membership,stdlib-set,5,0.007907,0.0001,0.006934
+n1000_q1_mixed_seed2028,1000,1,mixed,Linear search,v1,5,2.8e-05,0.006463,0.006528
+n1000_q1_mixed_seed2028,1000,1,mixed,Binary search recursive v1,v1,5,0.041165,0.000669,0.038375
+n1000_q1_mixed_seed2028,1000,1,mixed,Binary search iterative v2,v2,5,0.040744,0.000468,0.037758
+n1000_q1_mixed_seed2028,1000,1,mixed,Hash set membership,stdlib-set,5,0.007394,8.9e-05,0.00697
+n1000_q100_all_present_seed2029,1000,100,all_present,Linear search,v1,5,2.8e-05,0.206792,0.20635
+n1000_q100_all_present_seed2029,1000,100,all_present,Binary search recursive v1,v1,5,0.040751,0.054095,0.093008
+n1000_q100_all_present_seed2029,1000,100,all_present,Binary search iterative v2,v2,5,0.040936,0.040498,0.07922
+n1000_q100_all_present_seed2029,1000,100,all_present,Hash set membership,stdlib-set,5,0.007123,0.001705,0.008181
+n1000_q100_all_absent_seed2030,1000,100,all_absent,Linear search,v1,5,2.8e-05,1.034437,1.039625
+n1000_q100_all_absent_seed2030,1000,100,all_absent,Binary search recursive v1,v1,5,0.040651,0.072512,0.112975
+n1000_q100_all_absent_seed2030,1000,100,all_absent,Binary search iterative v2,v2,5,0.041711,0.053445,0.092046
+n1000_q100_all_absent_seed2030,1000,100,all_absent,Hash set membership,stdlib-set,5,0.006925,0.001727,0.007927
+n1000_q100_mixed_seed2031,1000,100,mixed,Linear search,v1,5,2.8e-05,0.620333,0.621792
+n1000_q100_mixed_seed2031,1000,100,mixed,Binary search recursive v1,v1,5,0.040918,0.064556,0.103458
+n1000_q100_mixed_seed2031,1000,100,mixed,Binary search iterative v2,v2,5,0.040985,0.047779,0.086387
+n1000_q100_mixed_seed2031,1000,100,mixed,Hash set membership,stdlib-set,5,0.006526,0.001614,0.007583
+n10000_q1_all_present_seed2032,10000,1,all_present,Linear search,v1,5,2.8e-05,0.038841,0.039377
+n10000_q1_all_present_seed2032,10000,1,all_present,Binary search recursive v1,v1,5,0.796694,0.00088,0.788514
+n10000_q1_all_present_seed2032,10000,1,all_present,Binary search iterative v2,v2,5,0.795806,0.00069,0.793819
+n10000_q1_all_present_seed2032,10000,1,all_present,Hash set membership,stdlib-set,5,0.090004,9.4e-05,0.082141
+n10000_q1_all_absent_seed2033,10000,1,all_absent,Linear search,v1,5,2.8e-05,0.088235,0.089442
+n10000_q1_all_absent_seed2033,10000,1,all_absent,Binary search recursive v1,v1,5,0.800361,0.001017,0.788097
+n10000_q1_all_absent_seed2033,10000,1,all_absent,Binary search iterative v2,v2,5,0.794597,0.000781,0.801917
+n10000_q1_all_absent_seed2033,10000,1,all_absent,Hash set membership,stdlib-set,5,0.091112,8.9e-05,0.082513
+n10000_q1_mixed_seed2034,10000,1,mixed,Linear search,v1,5,2.8e-05,0.005177,0.00519
+n10000_q1_mixed_seed2034,10000,1,mixed,Binary search recursive v1,v1,5,0.794222,0.00079,0.796111
+n10000_q1_mixed_seed2034,10000,1,mixed,Binary search iterative v2,v2,5,0.797111,0.000572,0.787819
+n10000_q1_mixed_seed2034,10000,1,mixed,Hash set membership,stdlib-set,5,0.089524,8.6e-05,0.083542
+n10000_q100_all_present_seed2035,10000,100,all_present,Linear search,v1,5,2.8e-05,1.899354,1.929021
+n10000_q100_all_present_seed2035,10000,100,all_present,Binary search recursive v1,v1,5,0.790833,0.084886,0.877333
+n10000_q100_all_present_seed2035,10000,100,all_present,Binary search iterative v2,v2,5,0.796194,0.063441,0.858931
+n10000_q100_all_present_seed2035,10000,100,all_present,Hash set membership,stdlib-set,5,0.090005,0.001754,0.085931
+n10000_q100_all_absent_seed2036,10000,100,all_absent,Linear search,v1,5,2.8e-05,9.006875,8.929292
+n10000_q100_all_absent_seed2036,10000,100,all_absent,Binary search recursive v1,v1,5,0.797208,0.102303,0.898514
+n10000_q100_all_absent_seed2036,10000,100,all_absent,Binary search iterative v2,v2,5,0.796305,0.074118,0.867569
+n10000_q100_all_absent_seed2036,10000,100,all_absent,Hash set membership,stdlib-set,5,0.092736,0.001706,0.087511
+n10000_q100_mixed_seed2037,10000,100,mixed,Linear search,v1,5,2.8e-05,5.523666,5.545541
+n10000_q100_mixed_seed2037,10000,100,mixed,Binary search recursive v1,v1,5,0.790972,0.092071,0.888264
+n10000_q100_mixed_seed2037,10000,100,mixed,Binary search iterative v2,v2,5,0.793083,0.067091,0.856306
+n10000_q100_mixed_seed2037,10000,100,mixed,Hash set membership,stdlib-set,5,0.093188,0.001614,0.08554
+n100000_q1_all_present_seed2038,100000,1,all_present,Linear search,v1,5,2.8e-05,0.158183,0.158554
+n100000_q1_all_present_seed2038,100000,1,all_present,Binary search recursive v1,v1,5,10.346791,0.001056,10.37075
+n100000_q1_all_present_seed2038,100000,1,all_present,Binary search iterative v2,v2,5,10.42725,0.000876,10.339625
+n100000_q1_all_present_seed2038,100000,1,all_present,Hash set membership,stdlib-set,5,1.272979,0.000101,1.235812
+n100000_q1_all_absent_seed2039,100000,1,all_absent,Linear search,v1,5,2.8e-05,0.880847,0.883014
+n100000_q1_all_absent_seed2039,100000,1,all_absent,Binary search recursive v1,v1,5,10.365875,0.001241,10.417875
+n100000_q1_all_absent_seed2039,100000,1,all_absent,Binary search iterative v2,v2,5,10.437208,0.000961,10.458083
+n100000_q1_all_absent_seed2039,100000,1,all_absent,Hash set membership,stdlib-set,5,1.268334,0.000105,1.244833
+n100000_q1_mixed_seed2040,100000,1,mixed,Linear search,v1,5,2.8e-05,0.061315,0.060792
+n100000_q1_mixed_seed2040,100000,1,mixed,Binary search recursive v1,v1,5,10.515625,0.001144,10.45025
+n100000_q1_mixed_seed2040,100000,1,mixed,Binary search iterative v2,v2,5,10.387667,0.000958,10.396667
+n100000_q1_mixed_seed2040,100000,1,mixed,Hash set membership,stdlib-set,5,1.276959,0.000101,1.242458
+n100000_q100_all_present_seed2041,100000,100,all_present,Linear search,v1,5,2.8e-05,17.369167,17.325917
+n100000_q100_all_present_seed2041,100000,100,all_present,Binary search recursive v1,v1,5,10.431792,0.113862,10.526208
+n100000_q100_all_present_seed2041,100000,100,all_present,Binary search iterative v2,v2,5,10.386,0.083183,10.510958
+n100000_q100_all_present_seed2041,100000,100,all_present,Hash set membership,stdlib-set,5,1.260854,0.001827,1.253021
+n100000_q100_all_absent_seed2042,100000,100,all_absent,Linear search,v1,5,2.8e-05,88.670542,89.009208
+n100000_q100_all_absent_seed2042,100000,100,all_absent,Binary search recursive v1,v1,5,10.42025,0.1244,10.553833
+n100000_q100_all_absent_seed2042,100000,100,all_absent,Binary search iterative v2,v2,5,10.382416,0.089671,10.480333
+n100000_q100_all_absent_seed2042,100000,100,all_absent,Hash set membership,stdlib-set,5,1.279583,0.001787,1.278375
+n100000_q100_mixed_seed2043,100000,100,mixed,Linear search,v1,5,2.8e-05,52.26575,52.733458
+n100000_q100_mixed_seed2043,100000,100,mixed,Binary search recursive v1,v1,5,10.539209,0.123992,10.618542
+n100000_q100_mixed_seed2043,100000,100,mixed,Binary search iterative v2,v2,5,10.44175,0.086023,10.51475
+n100000_q100_mixed_seed2043,100000,100,mixed,Hash set membership,stdlib-set,5,1.311521,0.001638,1.247062
