@@ -237,8 +237,8 @@ def render_report(bundle: ResultsBundle) -> str:
         "- USDT is treated as the supplied US-dollar proxy; PAXG is the supplied gold proxy.",
         "- The S&P 500 file is optional, date-dependent, and not part of the required 40 "
         "tracked assets.",
-        "- Measurements identify uncommitted source files by SHA-256 because no commit or "
-        "push was authorized for this work.",
+        "- Canonical measurements identify the committed implementation by Git commit "
+        "and by SHA-256 source hashes.",
         "",
         "## Dashboard",
         "",

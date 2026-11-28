@@ -8,10 +8,10 @@ The exact rolling binomial recurrence was implemented with one value vector, val
 
 | Scenario | N | Assets | Workers | Median seconds | Peak RSS bytes | Peak RSS MiB |
 |---|---:|---:|---:|---:|---:|---:|
-| Bitcoin, one year | 8,760 | 1 | 1 | 0.076302292 | 62,816,256 | 59.906 |
-| Bitcoin, full history | 43,822 | 1 | 1 | 1.873210834 | 58,310,656 | 55.609 |
-| All assets, one year | 8,760 | 40 | 8 | 0.575832000 | 309,821,440 | 295.469 |
-| All assets, full history | 43,822 | 40 | 8 | 14.714668334 | 306,577,408 | 292.375 |
+| Bitcoin, one year | 8,760 | 1 | 1 | 0.077180792 | 59,539,456 | 56.781 |
+| Bitcoin, full history | 43,822 | 1 | 1 | 1.851040000 | 58,671,104 | 55.953 |
+| All assets, one year | 8,760 | 40 | 8 | 0.592842459 | 301,072,384 | 287.125 |
+| All assets, full history | 43,822 | 40 | 8 | 14.370036291 | 295,960,576 | 282.250 |
 
 ## Bitcoin results
 
@@ -53,10 +53,10 @@ Across the four full-history pilot assets, Python and compiled values had maximu
 
 ## Raw timing repeats
 
-- Bitcoin, one year: `0.077040583, 0.076183417, 0.076201375, 0.076831375, 0.076302292` seconds
-- Bitcoin, full history: `1.873210834, 2.077691208, 1.888791875, 1.870727250, 1.870483708` seconds
-- All assets, one year: `0.576044500, 0.561851083, 0.568438583, 0.577066458, 0.575832000` seconds
-- All assets, full history: `13.699801458, 14.133541917, 15.012555625, 14.714668334, 15.053255583` seconds
+- Bitcoin, one year: `0.077180792, 0.076718083, 0.079233000, 0.076384500, 0.078193250` seconds
+- Bitcoin, full history: `1.851040000, 1.932311917, 1.927171417, 1.830461500, 1.836721458` seconds
+- All assets, one year: `0.560702542, 0.602979125, 0.605164333, 0.561879334, 0.592842459` seconds
+- All assets, full history: `13.586133459, 13.760511000, 14.863014458, 14.370036291, 17.500468459` seconds
 
 ## All 40 put values
 
@@ -122,7 +122,7 @@ Inputs were parsed, validated, checksummed, and calibrated outside timing. Each 
 - The missing full-history exchange hour is not interpolated; adjacent available observations remain adjacent tree periods, while endpoint timestamps determine T.
 - USDT is treated as the supplied US-dollar proxy; PAXG is the supplied gold proxy.
 - The S&P 500 file is optional, date-dependent, and not part of the required 40 tracked assets.
-- Measurements identify uncommitted source files by SHA-256 because no commit or push was authorized for this work.
+- Canonical measurements identify the committed implementation by Git commit and by SHA-256 source hashes.
 
 ## Dashboard
 

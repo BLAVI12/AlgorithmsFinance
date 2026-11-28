@@ -15,10 +15,10 @@ assumptions, and exercise decisions. [CONTRACT.md](CONTRACT.md) freezes the publ
 
 | Scenario | N | Assets | Workers | Median seconds | Peak RSS MiB |
 |---|---:|---:|---:|---:|---:|
-| Bitcoin, one year | 8,760 | 1 | 1 | 0.076302292 | 59.906 |
-| Bitcoin, full history | 43,822 | 1 | 1 | 1.873210834 | 55.609 |
-| All assets, one year | 8,760 | 40 | 8 | 0.575832000 | 295.469 |
-| All assets, full history | 43,822 | 40 | 8 | 14.714668334 | 292.375 |
+| Bitcoin, one year | 8,760 | 1 | 1 | 0.077180792 | 56.781 |
+| Bitcoin, full history | 43,822 | 1 | 1 | 1.851040000 | 55.953 |
+| All assets, one year | 8,760 | 40 | 8 | 0.592842459 | 287.125 |
+| All assets, full history | 43,822 | 40 | 8 | 14.370036291 | 282.250 |
 
 Bitcoin values are `16,713.714208766745` for one year and
 `20,716.754071288182` for full history. The first observed boundary crossings
